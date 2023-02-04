@@ -2,9 +2,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 
 use crate::rootfile::RootFile;
 
-/**
- * Wraps information from .cvmfspublished
- */
+/// Wraps information from .cvmfspublished
 pub struct Manifest {
     pub root_file: RootFile,
     pub root_catalog: String,

@@ -29,6 +29,9 @@ impl Fetcher {
         })
     }
 
+    ///Method to retrieve a file from the cache if exists, or from
+    ///the repository if it doesn't. In case it has to be retrieved from
+    ///the repository it won't be decompressed
     pub fn retrieve_raw_file(&self, file_name: &str) -> CvmfsResult<String> {
         let cache_file = self.cache.add(file_name);
         let file_url = self.make_file_url(file_name);

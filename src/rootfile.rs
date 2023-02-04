@@ -7,22 +7,19 @@ use sha1::{Digest, Sha1};
 
 use crate::common::{CvmfsError, CvmfsResult};
 
-/**
- * Base class for CernVM-FS repository's signed 'root files'.
- *
- * A CernVM-FS repository has essential 'root files' that have a defined name and
- * serve as entry points into the repository.
- * Namely the manifest (.cvmfspublished) and the whitelist (.cvmfswhitelist) that
- * both have class representations inheriting from RootFile and implementing the
- * abstract methods defined here.
- * Any 'root file' in CernVM-FS is a signed list of line-by-line key-value pairs
- * where the key is represented by a single character in the beginning of a line
- * directly followed by the value. The key-value part of the file is terminted
- * either by EOF or by a termination line (--) followed by a signature.
- * The signature follows directly after the termination line with a hash of the
- * key-value line content (without the termination line) followed by an \n and a
- * binary string containing the private-key signature terminated by EOF.
- */
+/// Base class for CernVM-FS repository's signed 'root files'.
+/// A CernVM-FS repository has essential 'root files' that have a defined name and
+/// serve as entry points into the repository.
+/// Namely the manifest (.cvmfspublished) and the whitelist (.cvmfswhitelist) that
+/// both have class representations inheriting from RootFile and implementing the
+/// abstract methods defined here.
+/// Any 'root file' in CernVM-FS is a signed list of line-by-line key-value pairs
+/// where the key is represented by a single character in the beginning of a line
+/// directly followed by the value. The key-value part of the file is terminted
+/// either by EOF or by a termination line (--) followed by a signature.
+/// The signature follows directly after the termination line with a hash of the
+/// key-value line content (without the termination line) followed by an \n and a
+/// binary string containing the private-key signature terminated by EOF.
 pub struct RootFile {
     checksum: Option<String>,
     contents: String,

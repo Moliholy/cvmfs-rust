@@ -7,3 +7,4 @@ pub mod directoryentry;
 pub mod catalog;
 pub mod database_object;
 pub mod repository;
+pub mod revision;

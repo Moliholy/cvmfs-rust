@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use compress::zlib;
 use futures::executor::block_on;
 
-use crate::common::CvmfsResult;
+use crate::common::{CvmfsError, CvmfsResult};
 use crate::fetcher::cache::Cache;
 
 pub struct Fetcher {
@@ -43,18 +43,21 @@ impl Fetcher {
         if let Some(cached_file) = self.cache.get(file_name) {
             return Ok(cached_file.to_str().unwrap().into());
         }
-        Ok(self.retrieve_file_from_source(file_name))
+        Ok(self.retrieve_file_from_source(file_name)?)
     }
 
     fn make_file_url(&self, file_name: &str) -> PathBuf {
         Path::join(self.source.as_ref(), file_name)
     }
 
-    fn retrieve_file_from_source(&self, file_name: &str) -> String {
+    fn retrieve_file_from_source(&self, file_name: &str) -> CvmfsResult<String> {
         let file_url = self.make_file_url(file_name);
         let cached_file = self.cache.add(file_name);
-        block_on(Self::download_content_and_decompress(cached_file.to_str().unwrap(), file_url.to_str().unwrap())).unwrap();
-        self.cache.get(file_name).unwrap().to_str().unwrap().into()
+        block_on(Self::download_content_and_decompress(cached_file.to_str().unwrap(), file_url.to_str().unwrap()))?;
+        match self.cache.get(file_name) {
+            None => Err(CvmfsError::FileNotFound),
+            Some(file) => Ok(file.to_str().unwrap().into())
+        }
     }
 
     async fn download_content_and_decompress(cached_file: &str, file_url: &str) -> CvmfsResult<()> {

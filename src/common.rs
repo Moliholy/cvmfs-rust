@@ -30,6 +30,8 @@ pub enum CvmfsError {
     DatabaseError,
     #[error("Catalog initialization")]
     CatalogInitialization,
+    #[error("File not found")]
+    FileNotFound,
 }
 
 impl From<Error> for CvmfsError {

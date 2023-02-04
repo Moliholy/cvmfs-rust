@@ -25,9 +25,9 @@ WHERE md5path_1 = ? AND md5path_2 = ? \
 LIMIT 1;";
 
 pub struct CatalogReference {
-    root_path: String,
-    catalog_hash: String,
-    catalog_size: u32,
+    pub(crate) root_path: String,
+    pub(crate) catalog_hash: String,
+    pub(crate) catalog_size: u32,
 }
 
 /// Wraps the basic functionality of CernVM-FS Catalogs

@@ -65,7 +65,7 @@ impl Repository {
         self.opened_catalogs.insert(catalog_hash.into(), catalog);
         Ok(self.opened_catalogs.get(catalog_hash.into()).unwrap())
     }
-    
+
     fn read_manifest(fetcher: &Fetcher) -> CvmfsResult<Manifest> {
         let manifest_file = fetcher.retrieve_raw_file(MANIFEST_NAME)?;
         let file = File::open(&manifest_file)?;

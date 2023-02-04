@@ -4,6 +4,14 @@ use reqwest::Error;
 
 use crate::directoryentry::directoryentry::PathHash;
 
+pub const REPO_CONFIG_PATH: &str = "/etc/cvmfs/repositories.d";
+pub const SERVER_CONFIG_NAME: &str = "server.conf";
+pub const REST_CONNECTOR: &str = "control";
+pub const WHITELIST_NAME: &str = ".cvmfswhitelist";
+pub const MANIFEST_NAME: &str = ".cvmfspublished";
+pub const LAST_REPLICATION_NAME: &str = ".cvmfs_last_snapshot";
+pub const REPLICATING_NAME: &str = ".cvmfs_is_snapshotting";
+
 pub type CvmfsResult<R> = Result<R, CvmfsError>;
 
 #[derive(Clone, Debug, PartialEq, thiserror::Error)]

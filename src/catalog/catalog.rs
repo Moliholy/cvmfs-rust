@@ -7,7 +7,7 @@ use crate::common::{canonicalize_path, CvmfsError, CvmfsResult, split_md5};
 use crate::database_object::DatabaseObject;
 use crate::directoryentry::directoryentry::{DirectoryEntry, PathHash};
 
-const CATALOG_ROOT_PREFIX: char = 'C';
+pub const CATALOG_ROOT_PREFIX: &str = "C";
 const LISTING_QUERY: &str = "\
 SELECT md5path_1, md5path_2, parent_1, parent_2, hash, flags, size, mode, mtime, name, symlink \
 FROM catalog \

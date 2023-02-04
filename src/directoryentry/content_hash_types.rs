@@ -1,6 +1,5 @@
-use crate::common::CvmfsError;
-
 /// Enumeration of supported content hash types
+#[derive(Copy, Clone)]
 pub enum ContentHashTypes {
     Unknown = -1,
     Sha1 = 1,

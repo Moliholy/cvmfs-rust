@@ -4,3 +4,5 @@ pub mod common;
 pub mod manifest;
 pub mod fetcher;
 pub mod directoryentry;
+pub mod catalog;
+pub mod database_object;

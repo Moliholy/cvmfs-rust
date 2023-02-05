@@ -19,10 +19,6 @@ fn main() {
         .expect("Failure creating the repository");
     let mut file_system = CernvmFileSystem::new(repository)
         .expect("Failure creating the file system");
-    {
-        file_system.set_default_revision()
-            .expect("Failure initializing the file system");
-    }
 
     let fuse_args = [OsStr::new("-o"), OsStr::new("fsname=cernvmfs")];
     fuse_mt::mount(fuse_mt::FuseMT::new(file_system, 1), &mountpoint, &fuse_args[..]).unwrap();

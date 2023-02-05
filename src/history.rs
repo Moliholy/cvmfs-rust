@@ -1,6 +1,6 @@
 use crate::common::CvmfsResult;
 use crate::database_object::DatabaseObject;
-use crate::revision::{RevisionTag, SQL_QUERY_DATE, SQL_QUERY_NAME, SQL_QUERY_REVISION};
+use crate::revision_tag::{RevisionTag, SQL_QUERY_DATE, SQL_QUERY_NAME, SQL_QUERY_REVISION};
 
 #[derive(Debug)]
 pub struct History {

@@ -15,11 +15,8 @@ fn test_initialization() -> CvmfsResult<()> {
     setup();
     let fetcher = Fetcher::new("http://cvmfs-stratum-one.cern.ch/opt/boss".into(), TEST_CACHE_PATH.into())?;
     let mut repo = Repository::new(fetcher)?;
-    {
-        assert_eq!(0, repo.opened_catalogs.len());
-        assert_eq!("boss.cern.ch", repo.fqrn);
-    }
-    let mut revision = repo.get_current_revision()?;
-    revision.retrieve_root_catalog()?;
+    assert_eq!(0, repo.opened_catalogs.len());
+    assert_eq!("boss.cern.ch", repo.fqrn);
+    repo.retrieve_current_root_catalog()?;
     Ok(())
 }

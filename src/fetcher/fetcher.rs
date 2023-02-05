@@ -35,7 +35,7 @@ impl Fetcher {
     pub fn retrieve_raw_file(&self, file_name: &str) -> CvmfsResult<String> {
         let cache_file = self.cache.add(file_name);
         let file_url = self.make_file_url(file_name);
-        block_on(Self::download_content_and_store(cache_file.to_str().unwrap(), file_url.to_str().unwrap()))?;
+        Self::download_content_and_store(cache_file.to_str().unwrap(), file_url.to_str().unwrap())?;
         Ok(self.cache.get(file_name).unwrap().to_str().unwrap().into())
     }
 
@@ -53,21 +53,23 @@ impl Fetcher {
     fn retrieve_file_from_source(&self, file_name: &str) -> CvmfsResult<String> {
         let file_url = self.make_file_url(file_name);
         let cached_file = self.cache.add(file_name);
-        block_on(Self::download_content_and_decompress(cached_file.to_str().unwrap(), file_url.to_str().unwrap()))?;
+        Self::download_content_and_decompress(cached_file.to_str().unwrap(), file_url.to_str().unwrap())?;
         match self.cache.get(file_name) {
             None => Err(CvmfsError::FileNotFound),
             Some(file) => Ok(file.to_str().unwrap().into())
         }
     }
 
-    async fn download_content_and_decompress(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
-        let file_bytes = reqwest::get(file_url).await?.bytes().await?;
+    fn download_content_and_decompress(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
+        let response = block_on(reqwest::get(file_url))?;
+        let file_bytes = block_on(response.bytes())?;
         Self::decompress(file_bytes.as_ref(), cached_file)?;
         Ok(())
     }
 
-    async fn download_content_and_store(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
-        let content = reqwest::get(file_url).await?.bytes().await?.to_vec();
+    fn download_content_and_store(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
+        let response = block_on(reqwest::get(file_url))?;
+        let content = block_on(response.bytes())?.to_vec();
         fs::write(cached_file, content)?;
         Ok(())
     }

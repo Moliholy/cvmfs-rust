@@ -5,6 +5,7 @@ use faccess::PathExt;
 
 use crate::common::{CvmfsError, CvmfsResult};
 
+#[derive(Debug)]
 pub struct Cache {
     pub cache_directory: String,
 }

@@ -4,9 +4,12 @@ use rusqlite::{Connection, OpenFlags, Statement};
 
 use crate::common::CvmfsResult;
 
+#[derive(Debug)]
 pub struct DatabaseObject {
     connection: Connection,
 }
+
+unsafe impl Sync for DatabaseObject {}
 
 impl DatabaseObject {
     pub fn new(database_file: &str) -> CvmfsResult<Self> {

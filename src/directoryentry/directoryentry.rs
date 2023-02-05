@@ -6,7 +6,7 @@ use rusqlite::{Row, Rows};
 use crate::common::{CvmfsError, CvmfsResult};
 use crate::directoryentry::content_hash_types::ContentHashTypes;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Flags {
     Directory = 1,
     NestedCatalogMountpoint = 2,
@@ -43,6 +43,7 @@ impl BitAnd<Flags> for i32 {
 }
 
 /// Wrapper around file chunks in the CVMFS catalogs
+#[derive(Debug)]
 pub struct Chunk {
     pub(crate) offset: u32,
     pub(crate) size: u32,
@@ -50,16 +51,19 @@ pub struct Chunk {
     pub(crate) content_hash_type: ContentHashTypes,
 }
 
+#[derive(Debug)]
 pub struct PathHash {
     pub(crate) hash1: u64,
     pub(crate) hash2: u64,
 }
 
+#[derive(Debug)]
 pub struct DirectoryEntryWrapper {
     directory_entry: DirectoryEntry,
     path: String,
 }
 
+#[derive(Debug)]
 pub struct DirectoryEntry {
     md5_path_1: u64,
     md5_path_2: u64,

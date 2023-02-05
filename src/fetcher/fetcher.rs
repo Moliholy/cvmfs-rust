@@ -7,6 +7,7 @@ use compress::zlib;
 use crate::common::{CvmfsError, CvmfsResult};
 use crate::fetcher::cache::Cache;
 
+#[derive(Debug)]
 pub struct Fetcher {
     cache: Cache,
     source: String,

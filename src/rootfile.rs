@@ -20,6 +20,7 @@ use crate::common::{CvmfsError, CvmfsResult};
 /// The signature follows directly after the termination line with a hash of the
 /// key-value line content (without the termination line) followed by an \n and a
 /// binary string containing the private-key signature terminated by EOF.
+#[derive(Debug)]
 pub struct RootFile {
     checksum: Option<String>,
     contents: String,

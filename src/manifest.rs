@@ -3,6 +3,7 @@ use chrono::{DateTime, NaiveDateTime, Utc};
 use crate::rootfile::RootFile;
 
 /// Wraps information from .cvmfspublished
+#[derive(Debug)]
 pub struct Manifest {
     pub root_file: RootFile,
     pub root_catalog: String,

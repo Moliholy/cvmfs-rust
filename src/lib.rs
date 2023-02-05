@@ -9,3 +9,4 @@ pub mod database_object;
 pub mod repository;
 pub mod revision;
 pub mod history;
+pub mod file_system;

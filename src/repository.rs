@@ -14,6 +14,7 @@ use crate::revision::Revision;
 use crate::rootfile::RootFile;
 
 /// Wrapper around a CVMFS repository representation
+#[derive(Debug)]
 pub struct Repository {
     pub opened_catalogs: HashMap<String, Catalog>,
     pub manifest: Manifest,

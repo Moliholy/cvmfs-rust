@@ -1,5 +1,5 @@
 /// Enumeration of supported content hash types
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum ContentHashTypes {
     Unknown = -1,
     Sha1 = 1,

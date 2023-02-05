@@ -24,6 +24,7 @@ FROM catalog \
 WHERE md5path_1 = ? AND md5path_2 = ? \
 LIMIT 1;";
 
+#[derive(Debug)]
 pub struct CatalogReference {
     pub(crate) root_path: String,
     pub(crate) catalog_hash: String,
@@ -31,6 +32,7 @@ pub struct CatalogReference {
 }
 
 /// Wraps the basic functionality of CernVM-FS Catalogs
+#[derive(Debug)]
 pub struct Catalog {
     database: DatabaseObject,
     schema: f32,
@@ -41,6 +43,8 @@ pub struct Catalog {
     last_modified: DateTime<Utc>,
     root_prefix: String,
 }
+
+unsafe impl Sync for Catalog {}
 
 impl Catalog {
     pub fn new(path: String, hash: String) -> CvmfsResult<Self> {

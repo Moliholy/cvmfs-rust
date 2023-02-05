@@ -2,11 +2,14 @@ use crate::common::CvmfsResult;
 use crate::database_object::DatabaseObject;
 use crate::revision::{RevisionTag, SQL_QUERY_DATE, SQL_QUERY_NAME, SQL_QUERY_REVISION};
 
+#[derive(Debug)]
 pub struct History {
     database_object: DatabaseObject,
     schema: String,
     fqrn: String,
 }
+
+unsafe impl Sync for History {}
 
 impl History {
     pub fn new(database_file: &str) -> CvmfsResult<Self> {

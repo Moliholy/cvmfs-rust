@@ -29,6 +29,7 @@ WHERE timestamp > ? \
 ORDER BY timestamp ASC \
 LIMIT 1";
 
+#[derive(Debug, Clone)]
 pub struct RevisionTag {
     pub(crate) name: String,
     pub(crate) hash: String,
@@ -56,6 +57,7 @@ impl RevisionTag {
 /// represents the concrete status of the repository in a certain period of
 /// time. Revision data is contained in the so-called Tags, which are stored in
 /// the History database.
+#[derive(Debug)]
 pub struct Revision<'repo> {
     repository: &'repo mut Repository,
     tag: RevisionTag,

@@ -36,7 +36,7 @@ pub struct Catalog {
     schema: f32,
     schema_revision: f32,
     revision: i32,
-    previous_revision: i32,
+    previous_revision: String,
     hash: String,
     last_modified: DateTime<Utc>,
     root_prefix: String,
@@ -47,7 +47,7 @@ impl Catalog {
         let database = DatabaseObject::new(&path)?;
         let properties = database.read_properties_table()?;
         let mut revision = 0;
-        let mut previous_revision = 0;
+        let mut previous_revision = String::new();
         let mut schema = 0.0;
         let mut schema_revision = 0.0;
         let mut root_prefix = String::from("/");
@@ -62,7 +62,7 @@ impl Catalog {
                         value.parse().unwrap(), 0,
                     ).unwrap(), Utc,
                 ),
-                "previous_revision" => previous_revision = value.parse().unwrap(),
+                "previous_revision" => previous_revision.push_str(&value),
                 "root_prefix" => {
                     root_prefix.clear();
                     root_prefix.push_str(&value)

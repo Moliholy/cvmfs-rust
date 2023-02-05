@@ -41,12 +41,12 @@ pub struct RevisionTag {
 impl RevisionTag {
     pub fn new(row: &Row) -> CvmfsResult<Self> {
         Ok(Self {
-            name: row.get(1)?,
-            hash: row.get(2)?,
-            revision: row.get(3)?,
-            timestamp: row.get(4)?,
-            channel: row.get(5)?,
-            description: row.get(6)?,
+            name: row.get(0)?,
+            hash: row.get(1)?,
+            revision: row.get(2)?,
+            timestamp: row.get(3)?,
+            channel: row.get(4)?,
+            description: row.get(5)?,
         })
     }
 }

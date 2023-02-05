@@ -1,4 +1,4 @@
-use std::fs::{create_dir, remove_dir_all};
+use std::fs::{create_dir_all, remove_dir_all};
 use std::path::{Path, PathBuf};
 
 use faccess::PathExt;
@@ -25,14 +25,14 @@ impl Cache {
         for i in 0x00..0xff {
             let new_folder = format!("{:02x}", i);
             let new_file = Path::join::<&Path>(base_path.as_ref(), new_folder.as_ref());
-            create_dir(new_file)?;
+            create_dir_all(new_file)?;
         }
         Ok(())
     }
 
     fn create_directory(&self, path: &str) -> CvmfsResult<String> {
         let cache_full_path = Path::new(&self.cache_directory).join(path);
-        create_dir(cache_full_path.clone())?;
+        create_dir_all(cache_full_path.clone())?;
         Ok(cache_full_path.into_os_string().into_string().unwrap())
     }
 

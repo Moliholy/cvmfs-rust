@@ -76,7 +76,7 @@ impl Repository {
         if !self.has_history() {
             return Err(CvmfsError::HistoryNotFound);
         }
-        let history_db = self.retrieve_object(&self.manifest.history_database.as_ref().unwrap())?;
+        let history_db = self.retrieve_object_with_suffix(&self.manifest.history_database.as_ref().unwrap(), "H")?;
         Ok(History::new(&history_db)?)
     }
 
@@ -96,7 +96,8 @@ impl Repository {
     fn read_manifest(fetcher: &Fetcher) -> CvmfsResult<Manifest> {
         let manifest_file = fetcher.retrieve_raw_file(MANIFEST_NAME)?;
         let file = File::open(&manifest_file)?;
-        Ok(Manifest::new(RootFile::new(&file)?))
+        let root_file = RootFile::new(&file)?;
+        Ok(Manifest::new(root_file))
     }
 
     fn get_replication_date(fetcher: &Fetcher, file_name: &str) -> CvmfsResult<Option<DateTime<Utc>>> {

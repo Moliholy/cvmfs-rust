@@ -49,22 +49,23 @@ impl Manifest {
         let mut allows_alternative_name = false;
 
         for line in root_file.lines() {
-            let key = line.chars().next().unwrap();
-            let value = &line[1..];
-            match key {
-                'C' => root_catalog = value.into(),
-                'R' => root_hash = value.into(),
-                'B' => root_catalog_size = value.parse().unwrap(),
-                'X' => certificate = value.into(),
-                'H' => history_database = Some(value.into()),
-                'T' => last_modified = DateTime::from_utc(NaiveDateTime::from_timestamp_millis(value.parse().unwrap()).unwrap(), Utc),
-                'D' => ttl = value.parse().unwrap(),
-                'S' => revision = value.parse().unwrap(),
-                'N' => repository_name = value.into(),
-                'L' => micro_catalog = value.into(),
-                'G' => garbage_collectable = Self::parse_boolean(value),
-                'A' => allows_alternative_name = Self::parse_boolean(value),
-                _ => {}
+            if let Some(key) = line.chars().next() {
+                let value = &line[1..];
+                match key {
+                    'C' => root_catalog = value.into(),
+                    'R' => root_hash = value.into(),
+                    'B' => root_catalog_size = value.parse().unwrap(),
+                    'X' => certificate = value.into(),
+                    'H' => history_database = Some(value.into()),
+                    'T' => last_modified = DateTime::from_utc(NaiveDateTime::from_timestamp_millis(value.parse().unwrap()).unwrap(), Utc),
+                    'D' => ttl = value.parse().unwrap(),
+                    'S' => revision = value.parse().unwrap(),
+                    'N' => repository_name = value.into(),
+                    'L' => micro_catalog = value.into(),
+                    'G' => garbage_collectable = Self::parse_boolean(value),
+                    'A' => allows_alternative_name = Self::parse_boolean(value),
+                    _ => {}
+                }
             }
         }
 

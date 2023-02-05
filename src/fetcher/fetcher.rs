@@ -3,7 +3,6 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use compress::zlib;
-use futures::executor::block_on;
 
 use crate::common::{CvmfsError, CvmfsResult};
 use crate::fetcher::cache::Cache;
@@ -61,15 +60,15 @@ impl Fetcher {
     }
 
     fn download_content_and_decompress(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
-        let response = block_on(reqwest::get(file_url))?;
-        let file_bytes = block_on(response.bytes())?;
+        let response = reqwest::blocking::get(file_url)?;
+        let file_bytes = response.bytes()?;
         Self::decompress(file_bytes.as_ref(), cached_file)?;
         Ok(())
     }
 
     fn download_content_and_store(cached_file: &str, file_url: &str) -> CvmfsResult<()> {
-        let response = block_on(reqwest::get(file_url))?;
-        let content = block_on(response.bytes())?.to_vec();
+        let response = reqwest::blocking::get(file_url)?;
+        let content = response.bytes()?.to_vec();
         fs::write(cached_file, content)?;
         Ok(())
     }

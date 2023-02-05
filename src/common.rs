@@ -32,6 +32,10 @@ pub enum CvmfsError {
     CatalogInitialization,
     #[error("File not found")]
     FileNotFound,
+    #[error("History not found")]
+    HistoryNotFound,
+    #[error("Revision not found")]
+    RevisionNotFound,
 }
 
 impl From<Error> for CvmfsError {

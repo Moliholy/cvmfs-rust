@@ -1,7 +1,33 @@
+use rusqlite::Row;
+
 use crate::catalog::catalog::Catalog;
 use crate::common::{CvmfsError, CvmfsResult};
 use crate::directoryentry::directoryentry::DirectoryEntry;
 use crate::repository::Repository;
+
+pub const SQL_QUERY_ALL: &str = "\
+SELECT name, hash, revision, timestamp, channel, description \
+FROM tags \
+ORDER BY timestamp DESC";
+
+pub const SQL_QUERY_NAME: &str = "\
+SELECT name, hash, revision, timestamp, channel, description \
+FROM tags \
+WHERE name = ? \
+LIMIT 1";
+
+pub const SQL_QUERY_REVISION: &str = "\
+SELECT name, hash, revision, timestamp, channel, description \
+FROM tags \
+WHERE revision = ? \
+LIMIT 1";
+
+pub const SQL_QUERY_DATE: &str = "\
+SELECT name, hash, revision, timestamp, channel, description \
+FROM tags \
+WHERE timestamp > ? \
+ORDER BY timestamp ASC \
+LIMIT 1";
 
 pub struct RevisionTag {
     pub(crate) name: String,
@@ -12,17 +38,37 @@ pub struct RevisionTag {
     pub(crate) description: String,
 }
 
+impl RevisionTag {
+    pub fn new(row: &Row) -> CvmfsResult<Self> {
+        Ok(Self {
+            name: row.get(1)?,
+            hash: row.get(2)?,
+            revision: row.get(3)?,
+            timestamp: row.get(4)?,
+            channel: row.get(5)?,
+            description: row.get(6)?,
+        })
+    }
+}
+
 /// Wrapper around a CVMFS Repository revision.
 /// A Revision is a concrete instantiation in time of the Repository. It
 /// represents the concrete status of the repository in a certain period of
 /// time. Revision data is contained in the so-called Tags, which are stored in
 /// the History database.
-pub struct Revision {
-    repository: Repository,
+pub struct Revision<'repo> {
+    repository: &'repo mut Repository,
     tag: RevisionTag,
 }
 
-impl Revision {
+impl<'repo> Revision<'repo> {
+    pub fn new(repository: &'repo mut Repository, tag: RevisionTag) -> Self {
+        Self {
+            repository,
+            tag,
+        }
+    }
+
     pub fn get_revision_number(&self) -> i32 {
         self.tag.revision
     }

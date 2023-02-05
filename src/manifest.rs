@@ -9,7 +9,7 @@ pub struct Manifest {
     pub root_hash: String,
     pub root_catalog_size: u32,
     pub certificate: String,
-    pub history_database: String,
+    pub history_database: Option<String>,
     pub last_modified: DateTime<Utc>,
     pub ttl: u32,
     pub revision: u32,
@@ -17,6 +17,12 @@ pub struct Manifest {
     pub micro_catalog: String,
     pub garbage_collectable: bool,
     pub allows_alternative_name: bool,
+}
+
+impl Manifest {
+    pub fn has_history(&self) -> bool {
+        self.history_database.is_some()
+    }
 }
 
 impl Manifest {
@@ -33,7 +39,7 @@ impl Manifest {
         let mut root_hash = String::new();
         let mut root_catalog_size = 0;
         let mut certificate = String::new();
-        let mut history_database = String::new();
+        let mut history_database = None;
         let mut last_modified = DateTime::default();
         let mut ttl = 0;
         let mut revision = 0;
@@ -50,7 +56,7 @@ impl Manifest {
                 'R' => root_hash = value.into(),
                 'B' => root_catalog_size = value.parse().unwrap(),
                 'X' => certificate = value.into(),
-                'H' => history_database = value.into(),
+                'H' => history_database = Some(value.into()),
                 'T' => last_modified = DateTime::from_utc(NaiveDateTime::from_timestamp_millis(value.parse().unwrap()).unwrap(), Utc),
                 'D' => ttl = value.parse().unwrap(),
                 'S' => revision = value.parse().unwrap(),

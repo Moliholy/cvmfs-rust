@@ -6,20 +6,22 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 
 use crate::catalog::catalog::{Catalog, CATALOG_ROOT_PREFIX};
-use crate::common::{CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME};
+use crate::common::{CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME};
 use crate::fetcher::fetcher::Fetcher;
+use crate::history::History;
 use crate::manifest::Manifest;
+use crate::revision::Revision;
 use crate::rootfile::RootFile;
 
 /// Wrapper around a CVMFS repository representation
 pub struct Repository {
-    opened_catalogs: HashMap<String, Catalog>,
-    manifest: Manifest,
-    fqrn: String,
-    repo_type: String,
-    replicating_since: Option<DateTime<Utc>>,
-    last_replication: Option<DateTime<Utc>>,
-    replicating: bool,
+    pub opened_catalogs: HashMap<String, Catalog>,
+    pub manifest: Manifest,
+    pub fqrn: String,
+    pub repo_type: String,
+    pub replicating_since: Option<DateTime<Utc>>,
+    pub last_replication: Option<DateTime<Utc>>,
+    pub replicating: bool,
     fetcher: Fetcher,
 }
 
@@ -64,6 +66,31 @@ impl Repository {
         let catalog = Catalog::new(catalog_file, catalog_hash.into())?;
         self.opened_catalogs.insert(catalog_hash.into(), catalog);
         Ok(self.opened_catalogs.get(catalog_hash.into()).unwrap())
+    }
+
+    pub fn has_history(&self) -> bool {
+        self.manifest.has_history()
+    }
+
+    pub fn retrieve_history(&self) -> CvmfsResult<History> {
+        if !self.has_history() {
+            return Err(CvmfsError::HistoryNotFound);
+        }
+        let history_db = self.retrieve_object(&self.manifest.history_database.as_ref().unwrap())?;
+        Ok(History::new(&history_db)?)
+    }
+
+    pub fn get_current_revision(&mut self) -> CvmfsResult<Revision> {
+        self.get_revision(self.manifest.revision)
+    }
+
+    pub fn get_revision(&mut self, number: u32) -> CvmfsResult<Revision> {
+        let history = self.retrieve_history()?;
+        let tag = history.get_tag_by_revision(number)?;
+        match tag {
+            None => Err(CvmfsError::RevisionNotFound),
+            Some(tag) => Ok(Revision::new(self, tag))
+        }
     }
 
     fn read_manifest(fetcher: &Fetcher) -> CvmfsResult<Manifest> {

@@ -13,17 +13,14 @@ pub struct Cache {
 impl Cache {
     pub fn new(cache_directory: String) -> CvmfsResult<Self> {
         let path = Path::new(&cache_directory);
-        if !path.exists() || !path.is_dir() || !path.writable() {
-            return Err(CvmfsError::CacheDirectoryNotFound);
-        }
         Ok(Self {
-            cache_directory: path.canonicalize().or(Err(CvmfsError::CacheDirectoryNotFound))?.to_str().unwrap().into()
+            cache_directory: path.to_str().unwrap().into()
         })
     }
 
     pub fn initialize(&self) -> CvmfsResult<()> {
         let base_path = self.create_directory("data")?;
-        for i in 0x00..0xff {
+        for i in 0x00..=0xff {
             let new_folder = format!("{:02x}", i);
             let new_file = Path::join::<&Path>(base_path.as_ref(), new_folder.as_ref());
             create_dir_all(new_file)?;

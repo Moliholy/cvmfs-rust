@@ -12,7 +12,7 @@ fn main() {
     }
     let repo_url = &args[1];
     let mountpoint = &args[2];
-    let repo_cache = if args.len() >= 3 { args[3].clone() } else { "/tmp/cvmfs".into() };
+    let repo_cache = if args.len() > 3 { args[3].clone() } else { "/tmp/cvmfs".into() };
     let fetcher = Fetcher::new(&repo_url, &repo_cache)
         .expect("Failure creating the fetcher");
     let repository = Repository::new(fetcher)

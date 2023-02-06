@@ -29,10 +29,6 @@ pub struct CernvmFileSystem {
 }
 
 impl FilesystemMT for CernvmFileSystem {
-    fn init(&self, _req: RequestInfo) -> ResultEmpty {
-        Ok(())
-    }
-
     fn destroy(&self) {
         self.opened_files.write().unwrap().drain();
     }
@@ -53,7 +49,7 @@ impl FilesystemMT for CernvmFileSystem {
                     ctime: time,
                     crtime: time,
                     kind: map_dirent_type_to_fs_kind(&result),
-                    perm: result.mode,
+                    perm: (result.mode & 0o7777) as u16,
                     nlink: 1,
                     uid: 1,
                     gid: 1,

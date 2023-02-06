@@ -159,7 +159,7 @@ impl Repository {
         let mut hash = String::from(self.get_root_hash());
         loop {
             match self.retrieve_catalog(&hash)?.find_nested_for_path(needle_path) {
-                Ok(None) => return Ok(self.retrieve_catalog(&hash).unwrap()),
+                Ok(None) => return Ok(self.retrieve_catalog(&hash)?),
                 Ok(Some(nested_reference)) => hash = nested_reference.catalog_hash.clone(),
                 Err(error) => return Err(error)
             };

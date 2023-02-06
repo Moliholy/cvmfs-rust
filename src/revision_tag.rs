@@ -1,9 +1,6 @@
 use rusqlite::Row;
 
-use crate::catalog::catalog::Catalog;
-use crate::common::{CvmfsError, CvmfsResult};
-use crate::directoryentry::directoryentry::DirectoryEntry;
-use crate::repository::Repository;
+use crate::common::CvmfsResult;
 
 pub const SQL_QUERY_ALL: &str = "\
 SELECT name, hash, revision, timestamp, channel, description \

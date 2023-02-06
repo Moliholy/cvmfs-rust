@@ -17,7 +17,7 @@ fn main() {
         .expect("Failure creating the fetcher");
     let repository = Repository::new(fetcher)
         .expect("Failure creating the repository");
-    let mut file_system = CernvmFileSystem::new(repository)
+    let file_system = CernvmFileSystem::new(repository)
         .expect("Failure creating the file system");
 
     let fuse_args = [OsStr::new("-o"), OsStr::new("fsname=cernvmfs")];

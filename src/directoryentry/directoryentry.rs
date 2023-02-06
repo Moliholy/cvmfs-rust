@@ -65,19 +65,19 @@ pub struct DirectoryEntryWrapper {
 
 #[derive(Debug)]
 pub struct DirectoryEntry {
-    md5_path_1: u64,
-    md5_path_2: u64,
-    parent_1: u64,
-    parent_2: u64,
-    content_hash: String,
-    flags: i32,
-    size: u32,
-    mode: i32,
-    mtime: u64,
-    name: String,
-    symlink: Option<String>,
-    content_hash_type: ContentHashTypes,
-    chunks: Vec<Chunk>,
+    pub(crate) md5_path_1: u64,
+    pub(crate) md5_path_2: u64,
+    pub(crate) parent_1: u64,
+    pub(crate) parent_2: u64,
+    pub(crate) content_hash: String,
+    pub(crate) flags: i32,
+    pub(crate) size: u64,
+    pub(crate) mode: u16,
+    pub(crate) mtime: u64,
+    pub(crate) name: String,
+    pub(crate) symlink: Option<String>,
+    pub(crate) content_hash_type: ContentHashTypes,
+    pub(crate) chunks: Vec<Chunk>,
 }
 
 impl DirectoryEntry {

@@ -38,6 +38,12 @@ pub enum CvmfsError {
     RevisionNotFound,
 }
 
+impl From<CvmfsError> for i32 {
+    fn from(_: CvmfsError) -> Self {
+        libc::ENOSYS
+    }
+}
+
 impl From<Error> for CvmfsError {
     fn from(_: Error) -> Self {
         CvmfsError::IO

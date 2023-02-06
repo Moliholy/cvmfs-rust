@@ -196,6 +196,7 @@ dependencies = [
  "fuse_mt",
  "futures",
  "hex",
+ "libc",
  "md5",
  "reqwest",
  "rusqlite",

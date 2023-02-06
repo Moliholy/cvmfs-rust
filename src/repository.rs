@@ -175,11 +175,11 @@ impl Repository {
         Ok(best_fit.find_directory_entry(&path)?)
     }
 
-    pub fn get_file(&mut self, path: &str) -> CvmfsResult<Option<String>> {
+    pub fn get_file(&mut self, path: &str) -> CvmfsResult<Option<File>> {
         let result = self.lookup(path)?;
         if let Some(directory_entry) = result {
             if directory_entry.is_file() {
-                return Ok(Some(self.retrieve_object(&directory_entry.content_hash_string())?));
+                return Ok(Some(File::open(self.retrieve_object(&directory_entry.content_hash_string())?)?));
             }
         }
         Err(CvmfsError::FileNotFound)

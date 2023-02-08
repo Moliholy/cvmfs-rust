@@ -19,26 +19,26 @@ pub enum Flags {
 }
 
 impl BitAnd<Flags> for Flags {
-    type Output = i32;
+    type Output = u32;
 
     fn bitand(self, rhs: Flags) -> Self::Output {
-        self as i32 & rhs
+        self as u32 & rhs
     }
 }
 
-impl BitAnd<i32> for Flags {
-    type Output = i32;
+impl BitAnd<u32> for Flags {
+    type Output = u32;
 
-    fn bitand(self, rhs: i32) -> Self::Output {
-        self as i32 & rhs
+    fn bitand(self, rhs: u32) -> Self::Output {
+        self as u32 & rhs
     }
 }
 
-impl BitAnd<Flags> for i32 {
-    type Output = i32;
+impl BitAnd<Flags> for u32 {
+    type Output = u32;
 
     fn bitand(self, rhs: Flags) -> Self::Output {
-        self & rhs as i32
+        self & rhs as u32
     }
 }
 
@@ -70,10 +70,10 @@ pub struct DirectoryEntry {
     pub(crate) parent_1: u64,
     pub(crate) parent_2: u64,
     pub(crate) content_hash: Option<String>,
-    pub(crate) flags: i32,
+    pub(crate) flags: u32,
     pub(crate) size: u64,
     pub(crate) mode: u16,
-    pub(crate) mtime: u64,
+    pub(crate) mtime: i64,
     pub(crate) name: String,
     pub(crate) symlink: Option<String>,
     pub(crate) content_hash_type: ContentHashTypes,
@@ -171,8 +171,8 @@ impl DirectoryEntry {
         }
     }
 
-    fn read_content_hash_type(flags: i32) -> ContentHashTypes {
-        let mut bit_mask = Flags::ContentHashTypes as i32;
+    fn read_content_hash_type(flags: u32) -> ContentHashTypes {
+        let mut bit_mask = Flags::ContentHashTypes as u32;
         let mut right_shifts = 0;
         while (bit_mask & 1) == 0 {
             bit_mask >>= 1;

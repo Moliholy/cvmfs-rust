@@ -1,9 +1,7 @@
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::{Path, PathBuf};
 
-use faccess::PathExt;
-
-use crate::common::{CvmfsError, CvmfsResult};
+use crate::common::CvmfsResult;
 
 #[derive(Debug)]
 pub struct Cache {

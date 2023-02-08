@@ -193,7 +193,6 @@ impl Catalog {
     pub fn find_directory_entry(&self, root_path: &str) -> CvmfsResult<Option<DirectoryEntry>> {
         let real_path = canonicalize_path(root_path);
         let md5_path = md5::compute(real_path.to_str().unwrap().bytes().collect::<Vec<u8>>()).0;
-        let a: String = md5_path.encode_hex();
         Ok(self.find_directory_entry_md5(&md5_path)?)
     }
 

@@ -63,7 +63,7 @@ impl From<rusqlite::Error> for CvmfsError {
 }
 
 pub fn canonicalize_path(path: &str) -> PathBuf {
-    PathBuf::from(path).canonicalize().unwrap_or(PathBuf::new())
+    PathBuf::from(path).canonicalize().unwrap_or(PathBuf::from(path))
 }
 
 pub fn split_md5(md5_digest: &[u8; 16]) -> PathHash {

@@ -17,8 +17,8 @@ impl ContentHashTypes {
     }
 }
 
-impl From<i32> for ContentHashTypes {
-    fn from(value: i32) -> Self {
+impl From<u32> for ContentHashTypes {
+    fn from(value: u32) -> Self {
         match value {
             1 => ContentHashTypes::Sha1,
             2 => ContentHashTypes::Ripemd160,

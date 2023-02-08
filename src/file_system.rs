@@ -9,8 +9,9 @@ use std::sync::RwLock;
 use std::time::{Duration, SystemTime};
 
 use chrono::{DateTime, NaiveDateTime, Utc};
-use fuse_mt::{CallbackResult, FileAttr, FilesystemMT, FileType, RequestInfo, ResultData, ResultEmpty, ResultEntry, ResultOpen, ResultReaddir, ResultSlice};
+use fuse_mt::{CallbackResult, FileAttr, FilesystemMT, FileType, RequestInfo, ResultData, ResultEmpty, ResultEntry, ResultOpen, ResultReaddir, ResultSlice, ResultStatfs};
 use fuse_mt::DirectoryEntry as FuseDirectoryEntry;
+use rand::Rng;
 
 use crate::common::CvmfsResult;
 use crate::directoryentry::directoryentry::DirectoryEntry;
@@ -19,7 +20,15 @@ use crate::repository::Repository;
 const TTL: Duration = Duration::from_secs(1);
 
 fn map_dirent_type_to_fs_kind(dirent: &DirectoryEntry) -> FileType {
-    if dirent.is_file() { FileType::RegularFile } else if dirent.is_directory() { FileType::Directory } else if dirent.is_symlink() { FileType::Symlink } else { FileType::RegularFile }
+    if dirent.is_file() {
+        FileType::RegularFile
+    } else if dirent.is_directory() {
+        FileType::Directory
+    } else if dirent.is_symlink() {
+        FileType::Symlink
+    } else {
+        FileType::RegularFile
+    }
 }
 
 #[derive(Debug)]
@@ -39,7 +48,7 @@ impl FilesystemMT for CernvmFileSystem {
         match repo.lookup(path)? {
             None => Err(libc::ENOENT),
             Some(result) => {
-                let date_time: DateTime<Utc> = DateTime::from_utc(NaiveDateTime::from_timestamp_opt(result.mtime as i64, 0).unwrap(), Utc);
+                let date_time: DateTime<Utc> = DateTime::from_utc(NaiveDateTime::from_timestamp_opt(result.mtime, 0).unwrap(), Utc);
                 let time = SystemTime::from(date_time);
                 let file_attr = FileAttr {
                     size: result.size,
@@ -50,9 +59,9 @@ impl FilesystemMT for CernvmFileSystem {
                     crtime: time,
                     kind: map_dirent_type_to_fs_kind(&result),
                     perm: (result.mode & 0o7777) as u16,
-                    nlink: 1,
-                    uid: 1,
-                    gid: 1,
+                    nlink: 0,
+                    uid: 0,
+                    gid: 0,
                     rdev: 1,
                     flags: 0,
                 };
@@ -87,7 +96,7 @@ impl FilesystemMT for CernvmFileSystem {
                 let file = repo.get_file(path)?.unwrap();
                 let fd = file.as_raw_fd() as u64;
                 self.opened_files.write().unwrap().insert(path.into(), file);
-                Ok((fd, flags))
+                Ok((fd, 0))
             }
         }
     }
@@ -109,11 +118,32 @@ impl FilesystemMT for CernvmFileSystem {
         callback(Ok(&data))
     }
 
+    fn flush(&self, _req: RequestInfo, _path: &Path, _fh: u64, _lock_owner: u64) -> ResultEmpty {
+        Ok(())
+    }
+
     fn release(&self, _req: RequestInfo, path: &Path, _fh: u64, _flags: u32, _lock_owner: u64, _flush: bool) -> ResultEmpty {
         let path = path.to_str().unwrap();
         match self.opened_files.write().unwrap().remove(path.into()) {
             None => Err(libc::ENOENT),
             Some(_) => Ok(())
+        }
+    }
+
+    fn opendir(&self, _req: RequestInfo, path: &Path, flags: u32) -> ResultOpen {
+        let path = path.to_str().unwrap();
+        let mut repo = self.repository.write().unwrap();
+        match repo.lookup(path)? {
+            None => Err(libc::ENOENT),
+            Some(result) => {
+                if !result.is_directory() {
+                    return Err(libc::ENOENT);
+                }
+                // don't need file descriptors if we have the path
+                let mut rng = rand::thread_rng();
+                let fd = rng.gen();
+                Ok((fd, 0))
+            }
         }
     }
 
@@ -134,6 +164,19 @@ impl FilesystemMT for CernvmFileSystem {
                 }).collect();
                 Ok(entries)
             }
+        }
+    }
+
+    fn releasedir(&self, _req: RequestInfo, _path: &Path, _fh: u64, _flags: u32) -> ResultEmpty {
+        Ok(())
+    }
+
+    fn access(&self, _req: RequestInfo, path: &Path, _mask: u32) -> ResultEmpty {
+        let path = path.to_str().unwrap();
+        let mut repo = self.repository.write().unwrap();
+        match repo.lookup(path)? {
+            None => Err(libc::ENOENT),
+            Some(_) => Ok(())
         }
     }
 }

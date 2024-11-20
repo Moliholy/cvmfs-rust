@@ -3,7 +3,7 @@ use std::ops::BitAnd;
 use hex::ToHex;
 use rusqlite::{Row, Rows};
 
-use crate::common::{CvmfsError, CvmfsResult};
+use crate::common::CvmfsResult;
 use crate::directoryentry::content_hash_types::ContentHashTypes;
 
 #[derive(Debug, Copy, Clone)]
@@ -45,39 +45,39 @@ impl BitAnd<Flags> for u32 {
 /// Wrapper around file chunks in the CVMFS catalogs
 #[derive(Debug)]
 pub struct Chunk {
-    pub(crate) offset: u32,
-    pub(crate) size: u32,
-    pub(crate) content_hash: String,
-    pub(crate) content_hash_type: ContentHashTypes,
+    pub offset: u32,
+    pub size: u32,
+    pub content_hash: String,
+    pub content_hash_type: ContentHashTypes,
 }
 
 #[derive(Debug)]
 pub struct PathHash {
-    pub(crate) hash1: u64,
-    pub(crate) hash2: u64,
+    pub hash1: u64,
+    pub hash2: u64,
 }
 
 #[derive(Debug)]
 pub struct DirectoryEntryWrapper {
-    directory_entry: DirectoryEntry,
-    path: String,
+    pub directory_entry: DirectoryEntry,
+    pub path: String,
 }
 
 #[derive(Debug)]
 pub struct DirectoryEntry {
-    pub(crate) md5_path_1: u64,
-    pub(crate) md5_path_2: u64,
-    pub(crate) parent_1: u64,
-    pub(crate) parent_2: u64,
-    pub(crate) content_hash: Option<String>,
-    pub(crate) flags: u32,
-    pub(crate) size: u64,
-    pub(crate) mode: u16,
-    pub(crate) mtime: i64,
-    pub(crate) name: String,
-    pub(crate) symlink: Option<String>,
-    pub(crate) content_hash_type: ContentHashTypes,
-    pub(crate) chunks: Vec<Chunk>,
+    pub md5_path_1: u64,
+    pub md5_path_2: u64,
+    pub parent_1: u64,
+    pub parent_2: u64,
+    pub content_hash: Option<String>,
+    pub flags: u32,
+    pub size: u64,
+    pub mode: u16,
+    pub mtime: i64,
+    pub name: String,
+    pub symlink: Option<String>,
+    pub content_hash_type: ContentHashTypes,
+    pub chunks: Vec<Chunk>,
 }
 
 impl DirectoryEntry {
@@ -89,10 +89,7 @@ impl DirectoryEntry {
             md5_path_2: row.get(1)?,
             parent_1: row.get(2)?,
             parent_2: row.get(3)?,
-            content_hash: match content_hash {
-                None => None,
-                Some(value) => Some(value.encode_hex())
-            },
+            content_hash: content_hash.map(|value| value.encode_hex()),
             flags,
             size: row.get(6)?,
             mode: row.get(7)?,
@@ -114,13 +111,13 @@ impl DirectoryEntry {
                             offset: row.get(0)?,
                             size: row.get(1)?,
                             content_hash: row.get(2)?,
-                            content_hash_type: self.content_hash_type.clone(),
+                            content_hash_type: self.content_hash_type,
                         })
                     } else {
                         break;
                     }
                 }
-                Err(_) => return Err(CvmfsError::DatabaseError)
+                Err(e) => return Err(e.into()),
             }
         }
         Ok(())
@@ -167,7 +164,11 @@ impl DirectoryEntry {
     pub fn content_hash_string(&self) -> String {
         match &self.content_hash {
             None => String::new(),
-            Some(value) => format!("{}{}", &value, ContentHashTypes::to_suffix(&self.content_hash_type))
+            Some(value) => format!(
+                "{}{}",
+                &value,
+                ContentHashTypes::to_suffix(&self.content_hash_type)
+            ),
         }
     }
 

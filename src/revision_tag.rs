@@ -28,12 +28,12 @@ LIMIT 1";
 
 #[derive(Debug, Clone)]
 pub struct RevisionTag {
-    pub(crate) name: String,
-    pub(crate) hash: String,
-    pub(crate) revision: i32,
-    pub(crate) timestamp: u64,
-    pub(crate) channel: i32,
-    pub(crate) description: String,
+    pub name: String,
+    pub hash: String,
+    pub revision: i32,
+    pub timestamp: u64,
+    pub channel: i32,
+    pub description: String,
 }
 
 impl RevisionTag {

@@ -1,10 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use chrono::{DateTime, NaiveDateTime, Utc};
-use hex::ToHex;
+use chrono::{DateTime, Utc};
 use rusqlite::Row;
 
-use crate::common::{canonicalize_path, CvmfsError, CvmfsResult, split_md5};
+use crate::common::{canonicalize_path, split_md5, CvmfsError, CvmfsResult};
 use crate::database_object::DatabaseObject;
 use crate::directoryentry::directoryentry::{DirectoryEntry, PathHash};
 
@@ -27,22 +26,22 @@ LIMIT 1;";
 
 #[derive(Debug)]
 pub struct CatalogReference {
-    pub(crate) root_path: String,
-    pub(crate) catalog_hash: String,
-    pub(crate) catalog_size: u32,
+    pub root_path: String,
+    pub catalog_hash: String,
+    pub catalog_size: u32,
 }
 
 /// Wraps the basic functionality of CernVM-FS Catalogs
 #[derive(Debug)]
 pub struct Catalog {
-    database: DatabaseObject,
-    schema: f32,
-    schema_revision: f32,
-    revision: i32,
-    previous_revision: String,
-    hash: String,
-    last_modified: DateTime<Utc>,
-    root_prefix: String,
+    pub database: DatabaseObject,
+    pub schema: f32,
+    pub schema_revision: f32,
+    pub revision: i32,
+    pub previous_revision: String,
+    pub hash: String,
+    pub last_modified: DateTime<Utc>,
+    pub root_prefix: String,
 }
 
 unsafe impl Sync for Catalog {}
@@ -62,11 +61,10 @@ impl Catalog {
                 "revision" => revision = value.parse().unwrap(),
                 "schema" => schema = value.parse().unwrap(),
                 "schema_revision" => schema_revision = value.parse().unwrap(),
-                "last_modified" => last_modified = DateTime::from_utc(
-                    NaiveDateTime::from_timestamp_opt(
-                        value.parse().unwrap(), 0,
-                    ).unwrap(), Utc,
-                ),
+                "last_modified" => {
+                    last_modified = DateTime::from_timestamp(value.parse().unwrap(), 0)
+                        .ok_or(CvmfsError::InvalidTimestamp)?
+                }
                 "previous_revision" => previous_revision.push_str(&value),
                 "root_prefix" => {
                     root_prefix.clear();
@@ -125,9 +123,9 @@ impl Catalog {
     }
 
     fn path_sanitized(needle_path: &str, catalog_path: &str) -> bool {
-        needle_path.len() == catalog_path.len() ||
-            (needle_path.len() > catalog_path.len() &&
-                needle_path.chars().collect::<Vec<char>>()[catalog_path.len()] == '/')
+        needle_path.len() == catalog_path.len()
+            || (needle_path.len() > catalog_path.len()
+                && needle_path.chars().collect::<Vec<char>>()[catalog_path.len()] == '/')
     }
 
     /// Find the best matching nested CatalogReference for a given path
@@ -137,8 +135,10 @@ impl Catalog {
         let mut best_match_score = 0;
         let real_needle_path = canonicalize_path(needle_path);
         for nested_catalog in catalog_refs {
-            if real_needle_path.starts_with(&nested_catalog.root_path) &&
-                nested_catalog.root_path.len() > best_match_score && Self::path_sanitized(needle_path, &nested_catalog.root_path) {
+            if real_needle_path.starts_with(&nested_catalog.root_path)
+                && nested_catalog.root_path.len() > best_match_score
+                && Self::path_sanitized(needle_path, &nested_catalog.root_path)
+            {
                 best_match_score = nested_catalog.root_path.len();
                 best_match = Some(nested_catalog);
             }
@@ -147,7 +147,11 @@ impl Catalog {
     }
 
     /// Create a directory listing of DirectoryEntry items based on MD5 path
-    pub fn list_directory_split_md5(&self, parent_1: u64, parent_2: u64) -> CvmfsResult<Vec<DirectoryEntry>> {
+    pub fn list_directory_split_md5(
+        &self,
+        parent_1: u64,
+        parent_2: u64,
+    ) -> CvmfsResult<Vec<DirectoryEntry>> {
         let mut statement = self.database.create_prepared_statement(LISTING_QUERY)?;
         let mut result = Vec::new();
         let mut rows = statement.query([parent_1, parent_2])?;
@@ -160,7 +164,7 @@ impl Catalog {
                         break;
                     }
                 }
-                Err(_) => return Err(CvmfsError::DatabaseError)
+                Err(e) => return Err(e.into()),
             }
         }
         Ok(result)
@@ -185,7 +189,10 @@ impl Catalog {
     /// Finds and adds the file chunk of a DirectoryEntry
     fn read_chunks(&self, directory_entry: &mut DirectoryEntry) -> CvmfsResult<()> {
         let mut statement = self.database.create_prepared_statement(READ_CHUNK)?;
-        let iterator = statement.query([directory_entry.path_hash().hash1, directory_entry.path_hash().hash2])?;
+        let iterator = statement.query([
+            directory_entry.path_hash().hash1,
+            directory_entry.path_hash().hash2,
+        ])?;
         directory_entry.add_chunks(iterator)?;
         Ok(())
     }
@@ -196,12 +203,18 @@ impl Catalog {
         Ok(self.find_directory_entry_md5(&md5_path)?)
     }
 
-    pub fn find_directory_entry_md5(&self, md5_path: &[u8; 16]) -> CvmfsResult<Option<DirectoryEntry>> {
+    pub fn find_directory_entry_md5(
+        &self,
+        md5_path: &[u8; 16],
+    ) -> CvmfsResult<Option<DirectoryEntry>> {
         let path_hash = split_md5(md5_path);
         Ok(self.find_directory_entry_split_md5(path_hash)?)
     }
 
-    fn find_directory_entry_split_md5(&self, path_hash: PathHash) -> CvmfsResult<Option<DirectoryEntry>> {
+    fn find_directory_entry_split_md5(
+        &self,
+        path_hash: PathHash,
+    ) -> CvmfsResult<Option<DirectoryEntry>> {
         let mut statement = self.database.create_prepared_statement(FIND_MD5_PATH)?;
         let mut rows = statement.query([path_hash.hash1, path_hash.hash2])?;
         if let Some(row) = rows.next()? {

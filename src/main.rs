@@ -19,15 +19,20 @@ fn main() {
     if !mountpoint.is_dir() {
         panic!("Mount point is not a directory");
     }
-    let repo_cache = if args.len() > 3 { args[3].clone() } else { "/tmp/cvmfs".into() };
-    let fetcher = Fetcher::new(&repo_url, &repo_cache)
-        .expect("Failure creating the fetcher");
-    let repository = Repository::new(fetcher)
-        .expect("Failure creating the repository");
-    let file_system = CernvmFileSystem::new(repository)
-        .expect("Failure creating the file system");
+    let repo_cache = if args.len() > 3 {
+        args[3].clone()
+    } else {
+        "/tmp/cvmfs".into()
+    };
+    let fetcher = Fetcher::new(&repo_url, &repo_cache).expect("Failure creating the fetcher");
+    let repository = Repository::new(fetcher).expect("Failure creating the repository");
+    let file_system = CernvmFileSystem::new(repository).expect("Failure creating the file system");
 
     let fuse_args = [OsStr::new("-o"), OsStr::new("fsname=cernvmfs")];
-    fuse_mt::mount(fuse_mt::FuseMT::new(file_system, 1), &mountpoint.to_str().unwrap(), &fuse_args[..])
-        .expect("Could not mount the file system in the mountpoint");
+    fuse_mt::mount(
+        fuse_mt::FuseMT::new(file_system, 1),
+        &mountpoint.to_str().unwrap(),
+        &fuse_args[..],
+    )
+    .expect("Could not mount the file system in the mountpoint");
 }

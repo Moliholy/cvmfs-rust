@@ -23,10 +23,7 @@ impl Fetcher {
         };
         let cache = Cache::new(cache_directory.into())?;
         cache.initialize()?;
-        Ok(Self {
-            cache,
-            source,
-        })
+        Ok(Self { cache, source })
     }
 
     ///Method to retrieve a file from the cache if exists, or from
@@ -53,10 +50,13 @@ impl Fetcher {
     fn retrieve_file_from_source(&self, file_name: &str) -> CvmfsResult<String> {
         let file_url = self.make_file_url(file_name);
         let cached_file = self.cache.add(file_name);
-        Self::download_content_and_decompress(cached_file.to_str().unwrap(), file_url.to_str().unwrap())?;
+        Self::download_content_and_decompress(
+            cached_file.to_str().unwrap(),
+            file_url.to_str().unwrap(),
+        )?;
         match self.cache.get(file_name) {
             None => Err(CvmfsError::FileNotFound),
-            Some(file) => Ok(file.to_str().unwrap().into())
+            Some(file) => Ok(file.to_str().unwrap().into()),
         }
     }
 

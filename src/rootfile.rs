@@ -68,9 +68,6 @@ impl RootFile {
                 return Err(CvmfsError::InvalidRootFileSignature);
             }
         }
-        Ok(Self {
-            checksum,
-            contents,
-        })
+        Ok(Self { checksum, contents })
     }
 }

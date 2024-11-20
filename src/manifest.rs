@@ -1,6 +1,6 @@
-use chrono::{DateTime, NaiveDateTime, Utc};
-
+use crate::common::{CvmfsError, CvmfsResult};
 use crate::rootfile::RootFile;
+use chrono::{DateTime, Utc};
 
 /// Wraps information from .cvmfspublished
 #[derive(Debug)]
@@ -31,11 +31,11 @@ impl Manifest {
         match value {
             "yes" => true,
             "no" => false,
-            _ => panic!("Invalid boolean value: {}", value)
+            _ => panic!("Invalid boolean value: {}", value),
         }
     }
 
-    pub fn new(root_file: RootFile) -> Self {
+    pub fn new(root_file: RootFile) -> CvmfsResult<Self> {
         let mut root_catalog = String::new();
         let mut root_hash = String::new();
         let mut root_catalog_size = 0;
@@ -58,7 +58,12 @@ impl Manifest {
                     'B' => root_catalog_size = value.parse().unwrap(),
                     'X' => certificate = value.into(),
                     'H' => history_database = Some(value.into()),
-                    'T' => last_modified = DateTime::from_utc(NaiveDateTime::from_timestamp_millis(value.parse().unwrap()).unwrap(), Utc),
+                    'T' => {
+                        last_modified = DateTime::from_timestamp_millis(
+                            value.parse().map_err(|_| CvmfsError::InvalidTimestamp)?,
+                        )
+                        .ok_or(CvmfsError::InvalidTimestamp)?
+                    }
                     'D' => ttl = value.parse().unwrap(),
                     'S' => revision = value.parse().unwrap(),
                     'N' => repository_name = value.into(),
@@ -70,7 +75,7 @@ impl Manifest {
             }
         }
 
-        Self {
+        Ok(Self {
             root_file,
             root_catalog,
             root_hash,
@@ -84,6 +89,6 @@ impl Manifest {
             micro_catalog,
             garbage_collectable,
             allows_alternative_name,
-        }
+        })
     }
 }

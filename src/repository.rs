@@ -6,7 +6,9 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 
 use crate::catalog::catalog::{Catalog, CATALOG_ROOT_PREFIX};
-use crate::common::{CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME};
+use crate::common::{
+    CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME,
+};
 use crate::directoryentry::directoryentry::DirectoryEntry;
 use crate::fetcher::fetcher::Fetcher;
 use crate::history::History;
@@ -31,7 +33,8 @@ pub struct Repository {
 impl Repository {
     pub fn new(fetcher: Fetcher) -> CvmfsResult<Self> {
         let manifest = Self::read_manifest(&fetcher)?;
-        let last_replication = Self::try_to_get_last_replication_timestamp(&fetcher).unwrap_or(None);
+        let last_replication =
+            Self::try_to_get_last_replication_timestamp(&fetcher).unwrap_or(None);
         let replicating_since = Self::try_to_get_replication_state(&fetcher).unwrap_or(None);
         let mut obj = Self {
             opened_catalogs: HashMap::new(),
@@ -53,9 +56,15 @@ impl Repository {
         self.retrieve_object_with_suffix(object_hash, "")
     }
 
-    pub fn retrieve_object_with_suffix(&self, object_hash: &str, hash_suffix: &str) -> CvmfsResult<String> {
+    pub fn retrieve_object_with_suffix(
+        &self,
+        object_hash: &str,
+        hash_suffix: &str,
+    ) -> CvmfsResult<String> {
         let (first, second) = object_hash.split_at(2);
-        let path = Path::new("data").join(first).join(second.to_owned() + hash_suffix);
+        let path = Path::new("data")
+            .join(first)
+            .join(second.to_owned() + hash_suffix);
         Ok(self.fetcher.retrieve_file(path.to_str().unwrap())?)
     }
 
@@ -71,7 +80,7 @@ impl Repository {
         let catalog_file = self.retrieve_object_with_suffix(catalog_hash, CATALOG_ROOT_PREFIX)?;
         let catalog = Catalog::new(catalog_file, catalog_hash.into())?;
         self.opened_catalogs.insert(catalog_hash.into(), catalog);
-        Ok(self.opened_catalogs.get(catalog_hash.into()).unwrap())
+        Ok(self.opened_catalogs.get(catalog_hash).unwrap())
     }
 
     pub fn has_history(&self) -> bool {
@@ -82,7 +91,8 @@ impl Repository {
         if !self.has_history() {
             return Err(CvmfsError::HistoryNotFound);
         }
-        let history_db = self.retrieve_object_with_suffix(&self.manifest.history_database.as_ref().unwrap(), "H")?;
+        let history_db = self
+            .retrieve_object_with_suffix(&self.manifest.history_database.as_ref().unwrap(), "H")?;
         Ok(History::new(&history_db)?)
     }
 
@@ -91,7 +101,7 @@ impl Repository {
         let tag = history.get_tag_by_revision(number)?;
         match tag {
             None => Err(CvmfsError::RevisionNotFound),
-            Some(tag) => Ok(tag)
+            Some(tag) => Ok(tag),
         }
     }
 
@@ -112,20 +122,25 @@ impl Repository {
         let manifest_file = fetcher.retrieve_raw_file(MANIFEST_NAME)?;
         let file = File::open(&manifest_file)?;
         let root_file = RootFile::new(&file)?;
-        Ok(Manifest::new(root_file))
+        Manifest::new(root_file)
     }
 
-    fn get_replication_date(fetcher: &Fetcher, file_name: &str) -> CvmfsResult<Option<DateTime<Utc>>> {
+    fn get_replication_date(
+        fetcher: &Fetcher,
+        file_name: &str,
+    ) -> CvmfsResult<Option<DateTime<Utc>>> {
         let file = fetcher.retrieve_raw_file(file_name)?;
         let date_string = fs::read_to_string(&file)?;
         let date = DateTime::parse_from_str(&date_string, "%a %e %h %H:%M:%S %Z %Y");
         match date {
             Ok(date) => Ok(Some(DateTime::from(date))),
-            Err(_) => Ok(None)
+            Err(_) => Ok(None),
         }
     }
 
-    fn try_to_get_last_replication_timestamp(fetcher: &Fetcher) -> CvmfsResult<Option<DateTime<Utc>>> {
+    fn try_to_get_last_replication_timestamp(
+        fetcher: &Fetcher,
+    ) -> CvmfsResult<Option<DateTime<Utc>>> {
         Self::get_replication_date(fetcher, LAST_REPLICATION_NAME)
     }
 
@@ -158,10 +173,13 @@ impl Repository {
     pub fn retrieve_catalog_for_path(&mut self, needle_path: &str) -> CvmfsResult<&Catalog> {
         let mut hash = String::from(self.get_root_hash());
         loop {
-            match self.retrieve_catalog(&hash)?.find_nested_for_path(needle_path) {
+            match self
+                .retrieve_catalog(&hash)?
+                .find_nested_for_path(needle_path)
+            {
                 Ok(None) => return Ok(self.retrieve_catalog(&hash)?),
                 Ok(Some(nested_reference)) => hash = nested_reference.catalog_hash.clone(),
-                Err(error) => return Err(error)
+                Err(error) => return Err(error),
             };
         }
     }
@@ -179,7 +197,9 @@ impl Repository {
         let result = self.lookup(path)?;
         if let Some(directory_entry) = result {
             if directory_entry.is_file() {
-                return Ok(Some(File::open(self.retrieve_object(&directory_entry.content_hash_string())?)?));
+                return Ok(Some(File::open(
+                    self.retrieve_object(&directory_entry.content_hash_string())?,
+                )?));
             }
         }
         Err(CvmfsError::FileNotFound)

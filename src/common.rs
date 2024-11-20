@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::path::PathBuf;
 
 use reqwest::Error;
@@ -27,7 +28,7 @@ pub enum CvmfsError {
     #[error("Cache directory not found")]
     CacheDirectoryNotFound,
     #[error("DatabaseError")]
-    DatabaseError,
+    DatabaseError(String),
     #[error("Catalog initialization")]
     CatalogInitialization,
     #[error("File not found")]
@@ -36,6 +37,22 @@ pub enum CvmfsError {
     HistoryNotFound,
     #[error("Revision not found")]
     RevisionNotFound,
+    #[error("Invalid timestamp")]
+    InvalidTimestamp,
+    #[error("Generic error")]
+    Generic(String),
+}
+
+impl From<String> for CvmfsError {
+    fn from(value: String) -> Self {
+        CvmfsError::Generic(value)
+    }
+}
+
+impl From<&str> for CvmfsError {
+    fn from(value: &str) -> Self {
+        CvmfsError::Generic(value.to_string())
+    }
 }
 
 impl From<CvmfsError> for i32 {
@@ -57,13 +74,15 @@ impl From<std::io::Error> for CvmfsError {
 }
 
 impl From<rusqlite::Error> for CvmfsError {
-    fn from(_: rusqlite::Error) -> Self {
-        CvmfsError::DatabaseError
+    fn from(e: rusqlite::Error) -> Self {
+        CvmfsError::DatabaseError(format!("{:?}", e))
     }
 }
 
 pub fn canonicalize_path(path: &str) -> PathBuf {
-    PathBuf::from(path).canonicalize().unwrap_or(PathBuf::from(path))
+    PathBuf::from(path)
+        .canonicalize()
+        .unwrap_or(PathBuf::from(path))
 }
 
 pub fn split_md5(md5_digest: &[u8; 16]) -> PathHash {

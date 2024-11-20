@@ -4,9 +4,9 @@ use crate::revision_tag::{RevisionTag, SQL_QUERY_DATE, SQL_QUERY_NAME, SQL_QUERY
 
 #[derive(Debug)]
 pub struct History {
-    database_object: DatabaseObject,
-    schema: String,
-    fqrn: String,
+    pub database_object: DatabaseObject,
+    pub schema: String,
+    pub fqrn: String,
 }
 
 unsafe impl Sync for History {}
@@ -39,7 +39,7 @@ impl History {
         let mut rows = statement.query([param])?;
         match rows.next()? {
             None => Ok(None),
-            Some(row) => Ok(Some(RevisionTag::new(row)?))
+            Some(row) => Ok(Some(RevisionTag::new(row)?)),
         }
     }
 

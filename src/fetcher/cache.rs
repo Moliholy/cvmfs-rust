@@ -12,7 +12,7 @@ impl Cache {
     pub fn new(cache_directory: String) -> CvmfsResult<Self> {
         let path = Path::new(&cache_directory);
         Ok(Self {
-            cache_directory: path.to_str().unwrap().into()
+            cache_directory: path.to_str().unwrap().into(),
         })
     }
 

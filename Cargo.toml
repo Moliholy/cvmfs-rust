@@ -1,22 +1,21 @@
 [package]
 name = "cvmfs"
 version = "0.1.0"
+description = "CernVM-FS client implementation in Rust"
+authors = ["José Molina <jmolinacolmenero@gmail.com>"]
 edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+license = "Apache-2.0"
+publish = false
 
 [dependencies]
-x509-certificate = "0.18"
-thiserror = "1.0"
+x509-certificate = "0.24.0"
+thiserror = "2.0.3"
 sha1 = "0.10"
 md5 = "0.7.0"
-base16ct = "0.1"
 chrono = "0.4"
-faccess = "0.2"
-reqwest = { version = "0.11", features = ["blocking"] }
-futures = "0.3"
+reqwest = { version = "0.12.9", features = ["blocking"] }
 compress = "0.2"
-rusqlite = { version = "0.28", features = ["blob"] }
+rusqlite = { version = "0.32.1", features = ["blob"] }
 hex = "0.4"
 fuse_mt = "0.6"
 libc = "0.2"

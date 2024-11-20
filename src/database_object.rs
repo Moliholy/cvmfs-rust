@@ -2,7 +2,7 @@ use std::path::Path;
 
 use rusqlite::{Connection, OpenFlags, Statement};
 
-use crate::common::CvmfsResult;
+use crate::common::{CvmfsError, CvmfsResult};
 
 #[derive(Debug)]
 pub struct DatabaseObject {
@@ -31,9 +31,9 @@ impl DatabaseObject {
 
     pub fn read_properties_table(&self) -> CvmfsResult<Vec<(String, String)>> {
         let mut statement = self.create_prepared_statement("SELECT key, value FROM properties;")?;
-        let iterator = statement.query_map([], |row| {
-            Ok((row.get(0)?, row.get(1)?))
-        })?;
-        Ok(iterator.map(|res| res.unwrap()).collect())
+        let iterator = statement.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?;
+        iterator
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(CvmfsError::from)
     }
 }

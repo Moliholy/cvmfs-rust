@@ -12,7 +12,7 @@ impl ContentHashTypes {
     pub fn to_suffix(obj: &Self) -> String {
         match obj {
             ContentHashTypes::Ripemd160 => "-rmd160".into(),
-            _ => "".into()
+            _ => "".into(),
         }
     }
 }

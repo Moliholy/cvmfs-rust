@@ -55,7 +55,7 @@ impl Manifest {
                 match key {
                     'C' => root_catalog = value.into(),
                     'R' => root_hash = value.into(),
-                    'B' => root_catalog_size = value.parse().unwrap(),
+                    'B' => root_catalog_size = value.parse().map_err(|_| CvmfsError::ParseError)?,
                     'X' => certificate = value.into(),
                     'H' => history_database = Some(value.into()),
                     'T' => {
@@ -64,8 +64,8 @@ impl Manifest {
                         )
                         .ok_or(CvmfsError::InvalidTimestamp)?
                     }
-                    'D' => ttl = value.parse().unwrap(),
-                    'S' => revision = value.parse().unwrap(),
+                    'D' => ttl = value.parse().map_err(|_| CvmfsError::ParseError)?,
+                    'S' => revision = value.parse().map_err(|_| CvmfsError::ParseError)?,
                     'N' => repository_name = value.into(),
                     'L' => micro_catalog = value.into(),
                     'G' => garbage_collectable = Self::parse_boolean(value),

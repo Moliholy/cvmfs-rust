@@ -2,7 +2,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 
-use cvmfs::fetcher::fetcher::Fetcher;
+use cvmfs::fetcher::Fetcher;
 use cvmfs::file_system::CernvmFileSystem;
 use cvmfs::repository::Repository;
 
@@ -24,14 +24,14 @@ fn main() {
     } else {
         "/tmp/cvmfs".into()
     };
-    let fetcher = Fetcher::new(&repo_url, &repo_cache).expect("Failure creating the fetcher");
+    let fetcher = Fetcher::new(repo_url, &repo_cache).expect("Failure creating the fetcher");
     let repository = Repository::new(fetcher).expect("Failure creating the repository");
     let file_system = CernvmFileSystem::new(repository).expect("Failure creating the file system");
 
     let fuse_args = [OsStr::new("-o"), OsStr::new("fsname=cernvmfs")];
     fuse_mt::mount(
         fuse_mt::FuseMT::new(file_system, 1),
-        &mountpoint.to_str().unwrap(),
+        mountpoint.to_str().expect("Invalid mount point string"),
         &fuse_args[..],
     )
     .expect("Could not mount the file system in the mountpoint");

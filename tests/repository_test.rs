@@ -1,7 +1,7 @@
 use std::fs;
 
 use cvmfs::common::CvmfsResult;
-use cvmfs::fetcher::fetcher::Fetcher;
+use cvmfs::fetcher::Fetcher;
 use cvmfs::repository::Repository;
 
 const TEST_CACHE_PATH: &str = "/tmp/cvmfs_test_cache";

@@ -44,14 +44,14 @@ impl History {
     }
 
     pub fn get_tag_by_name(&self, name: &str) -> CvmfsResult<Option<RevisionTag>> {
-        Ok(self.get_tag_by_query(SQL_QUERY_NAME, name)?)
+        self.get_tag_by_query(SQL_QUERY_NAME, name)
     }
 
     pub fn get_tag_by_revision(&self, revision: u32) -> CvmfsResult<Option<RevisionTag>> {
-        Ok(self.get_tag_by_query(SQL_QUERY_REVISION, revision.to_string().as_str())?)
+        self.get_tag_by_query(SQL_QUERY_REVISION, revision.to_string().as_str())
     }
 
     pub fn get_tag_by_date(&self, timestamp: u64) -> CvmfsResult<Option<RevisionTag>> {
-        Ok(self.get_tag_by_query(SQL_QUERY_DATE, timestamp.to_string().as_str())?)
+        self.get_tag_by_query(SQL_QUERY_DATE, timestamp.to_string().as_str())
     }
 }

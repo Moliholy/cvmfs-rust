@@ -17,7 +17,7 @@ use fuse_mt::{
 use rand::Rng;
 
 use crate::common::{CvmfsError, CvmfsResult};
-use crate::directoryentry::directoryentry::DirectoryEntry;
+use crate::directoryentry::DirectoryEntry;
 use crate::repository::Repository;
 
 const TTL: Duration = Duration::from_secs(1);
@@ -42,11 +42,13 @@ pub struct CernvmFileSystem {
 
 impl FilesystemMT for CernvmFileSystem {
     fn destroy(&self) {
-        self.opened_files.write().unwrap().drain();
+        if let Ok(mut f) = self.opened_files.write() {
+            f.drain();
+        };
     }
 
     fn getattr(&self, _req: RequestInfo, path: &Path, _fh: Option<u64>) -> ResultEntry {
-        let path = path.to_str().unwrap();
+        let path = path.to_str().ok_or(CvmfsError::FileNotFound)?;
         let mut repo = self
             .repository
             .write()
@@ -65,7 +67,7 @@ impl FilesystemMT for CernvmFileSystem {
                     ctime: time,
                     crtime: time,
                     kind: map_dirent_type_to_fs_kind(&result),
-                    perm: (result.mode & 0o7777) as u16,
+                    perm: result.mode & 0o7777,
                     nlink: 0,
                     uid: 0,
                     gid: 0,
@@ -78,15 +80,15 @@ impl FilesystemMT for CernvmFileSystem {
     }
 
     fn readlink(&self, _req: RequestInfo, path: &Path) -> ResultData {
-        let path = path.to_str().unwrap();
-        let mut repo = self.repository.write().unwrap();
+        let path = path.to_str().ok_or(CvmfsError::FileNotFound)?;
+        let mut repo = self.repository.write().map_err(|_| CvmfsError::Sync)?;
         match repo.lookup(path)? {
             None => Err(libc::ENOENT),
             Some(result) => {
                 if !result.is_symlink() {
                     return Err(libc::ENOLINK);
                 }
-                Ok(result.symlink.unwrap().into_bytes())
+                Ok(result.symlink.ok_or(CvmfsError::FileNotFound)?.into_bytes())
             }
         }
     }
@@ -120,17 +122,36 @@ impl FilesystemMT for CernvmFileSystem {
         size: u32,
         callback: impl FnOnce(ResultSlice<'_>) -> CallbackResult,
     ) -> CallbackResult {
-        let path = path.to_str().unwrap();
-        let mut opened_files = self.opened_files.write().unwrap();
-        let file = opened_files.get_mut(path).unwrap();
+        let path = match path.to_str() {
+            Some(p) => p,
+            None => return callback(Err(libc::ENOENT)),
+        };
+        let mut opened_files = match self.opened_files.write() {
+            Ok(guard) => guard,
+            Err(_) => return callback(Err(libc::EIO)),
+        };
+        let file = match opened_files.get_mut(path) {
+            Some(f) => f,
+            None => return callback(Err(libc::ENOENT)),
+        };
 
         let mut data = Vec::<u8>::with_capacity(size as usize);
         if let Err(e) = file.seek(SeekFrom::Start(offset)) {
-            return callback(Err(e.raw_os_error().unwrap()));
+            return callback(Err(match e.raw_os_error() {
+                Some(code) => code,
+                None => libc::EIO,
+            }));
         }
-        match file.read(unsafe { mem::transmute(data.spare_capacity_mut()) }) {
+        match file.read(unsafe {
+            mem::transmute::<&mut [std::mem::MaybeUninit<u8>], &mut [u8]>(data.spare_capacity_mut())
+        }) {
             Ok(n) => unsafe { data.set_len(n) },
-            Err(e) => return callback(Err(e.raw_os_error().unwrap())),
+            Err(e) => {
+                return callback(Err(match e.raw_os_error() {
+                    Some(code) => code,
+                    None => libc::EIO,
+                }))
+            }
         }
 
         callback(Ok(&data))
@@ -149,16 +170,24 @@ impl FilesystemMT for CernvmFileSystem {
         _lock_owner: u64,
         _flush: bool,
     ) -> ResultEmpty {
-        let path = path.to_str().unwrap();
-        match self.opened_files.write().unwrap().remove(path) {
+        let path = path.to_str().ok_or(libc::ENOENT)?;
+        match self
+            .opened_files
+            .write()
+            .map_err(|_| libc::EIO)?
+            .remove(path)
+        {
             None => Err(libc::ENOENT),
             Some(_) => Ok(()),
         }
     }
 
     fn opendir(&self, _req: RequestInfo, path: &Path, _flags: u32) -> ResultOpen {
-        let path = path.to_str().unwrap();
-        let mut repo = self.repository.write().unwrap();
+        let path = path.to_str().ok_or(libc::ENOENT)?;
+        let mut repo = match self.repository.write() {
+            Ok(repo) => repo,
+            Err(_) => return Err(libc::EIO),
+        };
         match repo.lookup(path)? {
             None => Err(libc::ENOENT),
             Some(result) => {
@@ -174,8 +203,8 @@ impl FilesystemMT for CernvmFileSystem {
     }
 
     fn readdir(&self, _req: RequestInfo, path: &Path, _fh: u64) -> ResultReaddir {
-        let path = path.to_str().unwrap();
-        let mut repo = self.repository.write().unwrap();
+        let path = path.to_str().ok_or(libc::ENOENT)?;
+        let mut repo = self.repository.write().map_err(|_| libc::EIO)?;
         match repo.lookup(path)? {
             None => Err(libc::ENOENT),
             Some(result) => {
@@ -200,8 +229,8 @@ impl FilesystemMT for CernvmFileSystem {
     }
 
     fn access(&self, _req: RequestInfo, path: &Path, _mask: u32) -> ResultEmpty {
-        let path = path.to_str().unwrap();
-        let mut repo = self.repository.write().unwrap();
+        let path = path.to_str().ok_or(libc::ENOENT)?;
+        let mut repo = self.repository.write().map_err(|_| libc::EIO)?;
         match repo.lookup(path)? {
             None => Err(libc::ENOENT),
             Some(_) => Ok(()),

@@ -1,7 +1,7 @@
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::{Path, PathBuf};
 
-use crate::common::CvmfsResult;
+use crate::common::{CvmfsError, CvmfsResult};
 
 #[derive(Debug)]
 pub struct Cache {
@@ -12,7 +12,7 @@ impl Cache {
     pub fn new(cache_directory: String) -> CvmfsResult<Self> {
         let path = Path::new(&cache_directory);
         Ok(Self {
-            cache_directory: path.to_str().unwrap().into(),
+            cache_directory: path.to_str().ok_or(CvmfsError::FileNotFound)?.into(),
         })
     }
 
@@ -29,7 +29,10 @@ impl Cache {
     fn create_directory(&self, path: &str) -> CvmfsResult<String> {
         let cache_full_path = Path::new(&self.cache_directory).join(path);
         create_dir_all(cache_full_path.clone())?;
-        Ok(cache_full_path.into_os_string().into_string().unwrap())
+        cache_full_path
+            .into_os_string()
+            .into_string()
+            .map_err(|_| CvmfsError::FileNotFound)
     }
 
     pub fn add(&self, file_name: &str) -> PathBuf {

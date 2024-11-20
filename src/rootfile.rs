@@ -28,7 +28,7 @@ pub struct RootFile {
 
 impl RootFile {
     pub fn has_signature(&self) -> bool {
-        self.checksum != None
+        self.checksum.is_some()
     }
 
     pub fn lines(&self) -> Split<char> {
@@ -64,7 +64,10 @@ impl RootFile {
             hasher.update(contents.as_bytes());
             let hash = &hasher.finalize()[..];
             let signature: String = hash.encode_hex();
-            if signature.ne(checksum.as_ref().unwrap()) {
+            if signature.ne(checksum
+                .as_ref()
+                .ok_or(CvmfsError::InvalidRootFileSignature)?)
+            {
                 return Err(CvmfsError::InvalidRootFileSignature);
             }
         }

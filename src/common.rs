@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use reqwest::Error;
 
-use crate::directoryentry::directoryentry::PathHash;
+use crate::directoryentry::PathHash;
 
 pub const REPO_CONFIG_PATH: &str = "/etc/cvmfs/repositories.d";
 pub const SERVER_CONFIG_NAME: &str = "server.conf";
@@ -39,6 +39,14 @@ pub enum CvmfsError {
     RevisionNotFound,
     #[error("Invalid timestamp")]
     InvalidTimestamp,
+    #[error("Parse error")]
+    ParseError,
+    #[error("Synchronization error")]
+    Sync,
+    #[error("Catalog not found")]
+    CatalogNotFound,
+    #[error("Tag not found")]
+    TagNotFound,
     #[error("Generic error")]
     Generic(String),
 }
@@ -89,10 +97,10 @@ pub fn split_md5(md5_digest: &[u8; 16]) -> PathHash {
     let mut hi = 0;
     let mut lo = 0;
     for i in 0..8 {
-        lo |= ((md5_digest[i] & 0xFF) as u64) << (i * 8);
+        lo |= (md5_digest[i] as u64) << (i * 8);
     }
     for i in 8..16 {
-        hi |= ((md5_digest[i] & 0xFF) as u64) << ((i - 8) * 8)
+        hi |= (md5_digest[i] as u64) << ((i - 8) * 8)
     }
     PathHash {
         hash1: lo,

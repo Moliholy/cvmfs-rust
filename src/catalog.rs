@@ -5,7 +5,7 @@ use rusqlite::Row;
 
 use crate::common::{canonicalize_path, split_md5, CvmfsError, CvmfsResult};
 use crate::database_object::DatabaseObject;
-use crate::directoryentry::directoryentry::{DirectoryEntry, PathHash};
+use crate::directoryentry::{DirectoryEntry, PathHash};
 
 pub const CATALOG_ROOT_PREFIX: &str = "C";
 const LISTING_QUERY: &str = "\
@@ -58,12 +58,17 @@ impl Catalog {
         let mut last_modified = Default::default();
         for (key, value) in properties {
             match key.as_str() {
-                "revision" => revision = value.parse().unwrap(),
-                "schema" => schema = value.parse().unwrap(),
-                "schema_revision" => schema_revision = value.parse().unwrap(),
+                "revision" => revision = value.parse().map_err(|_| CvmfsError::ParseError)?,
+                "schema" => schema = value.parse().map_err(|_| CvmfsError::ParseError)?,
+                "schema_revision" => {
+                    schema_revision = value.parse().map_err(|_| CvmfsError::ParseError)?
+                }
                 "last_modified" => {
-                    last_modified = DateTime::from_timestamp(value.parse().unwrap(), 0)
-                        .ok_or(CvmfsError::InvalidTimestamp)?
+                    last_modified = DateTime::from_timestamp(
+                        value.parse().map_err(|_| CvmfsError::ParseError)?,
+                        0,
+                    )
+                    .ok_or(CvmfsError::InvalidTimestamp)?
                 }
                 "previous_revision" => previous_revision.push_str(&value),
                 "root_prefix" => {
@@ -100,7 +105,11 @@ impl Catalog {
     pub fn nested_count(&self) -> CvmfsResult<u32> {
         let mut result = self.database.create_prepared_statement(NESTED_COUNT)?;
         let mut row = result.query([])?;
-        Ok(row.next()?.unwrap().get(0).unwrap())
+        let next_row = row
+            .next()
+            .map_err(|e| CvmfsError::DatabaseError(format!("{:?}", e)))?
+            .ok_or(CvmfsError::DatabaseError("No rows found".to_string()))?;
+        Ok(next_row.get(0)?)
     }
 
     /// List CatalogReferences to all contained nested catalogs
@@ -119,7 +128,7 @@ impl Catalog {
                 catalog_size: if new_version { row.get(2)? } else { 0 },
             })
         })?;
-        Ok(iterator.map(|row| row.unwrap()).collect())
+        Ok(iterator.collect::<Result<Vec<_>, _>>()?)
     }
 
     fn path_sanitized(needle_path: &str, catalog_path: &str) -> bool {
@@ -175,7 +184,13 @@ impl Catalog {
         if real_path.eq(Path::new("/")) {
             real_path = PathBuf::new();
         }
-        let md5_hash = md5::compute(real_path.to_str().unwrap().bytes().collect::<Vec<u8>>());
+        let md5_hash = md5::compute(
+            real_path
+                .to_str()
+                .ok_or(CvmfsError::FileNotFound)?
+                .bytes()
+                .collect::<Vec<u8>>(),
+        );
         let parent_hash = split_md5(&md5_hash.0);
         Ok(self.list_directory_split_md5(parent_hash.hash1, parent_hash.hash2)?)
     }
@@ -199,7 +214,14 @@ impl Catalog {
 
     pub fn find_directory_entry(&self, root_path: &str) -> CvmfsResult<Option<DirectoryEntry>> {
         let real_path = canonicalize_path(root_path);
-        let md5_path = md5::compute(real_path.to_str().unwrap().bytes().collect::<Vec<u8>>()).0;
+        let md5_path = md5::compute(
+            real_path
+                .to_str()
+                .ok_or(CvmfsError::FileNotFound)?
+                .bytes()
+                .collect::<Vec<u8>>(),
+        )
+        .0;
         Ok(self.find_directory_entry_md5(&md5_path)?)
     }
 

@@ -26,21 +26,21 @@ impl Fetcher {
         Ok(Self { cache, source })
     }
 
-    ///Method to retrieve a file from the cache if exists, or from
-    ///the repository if it doesn't. In case it has to be retrieved from
-    ///the repository it won't be decompressed
+    /// Method to retrieve a file from the cache if exists, or from
+    /// the repository if it doesn't. In case it has to be retrieved from
+    /// the repository it won't be decompressed.
     pub fn retrieve_raw_file(&self, file_name: &str) -> CvmfsResult<String> {
         let cache_file = self.cache.add(file_name);
         let file_url = self.make_file_url(file_name);
-        Self::download_content_and_store(cache_file.to_str().unwrap(), file_url.to_str().unwrap())?;
-        Ok(self.cache.get(file_name).unwrap().to_str().unwrap().into())
+        Self::download_content_and_store(cache_file.to_str().ok_or(CvmfsError::FileNotFound)?, file_url.to_str().ok_or(CvmfsError::FileNotFound)?)?;
+        Ok(self.cache.get(file_name).ok_or(CvmfsError::FileNotFound)?.to_str().ok_or(CvmfsError::FileNotFound)?.into())
     }
 
     pub fn retrieve_file(&self, file_name: &str) -> CvmfsResult<String> {
         if let Some(cached_file) = self.cache.get(file_name) {
-            return Ok(cached_file.to_str().unwrap().into());
+            return Ok(cached_file.to_str().ok_or(CvmfsError::FileNotFound)?.into());
         }
-        Ok(self.retrieve_file_from_source(file_name)?)
+        self.retrieve_file_from_source(file_name)
     }
 
     fn make_file_url(&self, file_name: &str) -> PathBuf {
@@ -51,12 +51,12 @@ impl Fetcher {
         let file_url = self.make_file_url(file_name);
         let cached_file = self.cache.add(file_name);
         Self::download_content_and_decompress(
-            cached_file.to_str().unwrap(),
-            file_url.to_str().unwrap(),
+            cached_file.to_str().ok_or(CvmfsError::FileNotFound)?,
+            file_url.to_str().ok_or(CvmfsError::FileNotFound)?,
         )?;
         match self.cache.get(file_name) {
             None => Err(CvmfsError::FileNotFound),
-            Some(file) => Ok(file.to_str().unwrap().into()),
+            Some(file) => Ok(file.to_str().ok_or(CvmfsError::FileNotFound)?.into()),
         }
     }
 

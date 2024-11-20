@@ -1,8 +1,9 @@
+pub mod cache;
 pub mod catalog;
 pub mod certificate;
 pub mod common;
 pub mod database_object;
-pub mod directoryentry;
+pub mod directory_entry;
 pub mod fetcher;
 pub mod file_system;
 pub mod history;

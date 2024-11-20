@@ -2,10 +2,9 @@ use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use compress::zlib;
-
+use crate::cache::Cache;
 use crate::common::{CvmfsError, CvmfsResult};
-use crate::fetcher::cache::Cache;
+use compress::zlib;
 
 #[derive(Debug)]
 pub struct Fetcher {
@@ -32,8 +31,17 @@ impl Fetcher {
     pub fn retrieve_raw_file(&self, file_name: &str) -> CvmfsResult<String> {
         let cache_file = self.cache.add(file_name);
         let file_url = self.make_file_url(file_name);
-        Self::download_content_and_store(cache_file.to_str().ok_or(CvmfsError::FileNotFound)?, file_url.to_str().ok_or(CvmfsError::FileNotFound)?)?;
-        Ok(self.cache.get(file_name).ok_or(CvmfsError::FileNotFound)?.to_str().ok_or(CvmfsError::FileNotFound)?.into())
+        Self::download_content_and_store(
+            cache_file.to_str().ok_or(CvmfsError::FileNotFound)?,
+            file_url.to_str().ok_or(CvmfsError::FileNotFound)?,
+        )?;
+        Ok(self
+            .cache
+            .get(file_name)
+            .ok_or(CvmfsError::FileNotFound)?
+            .to_str()
+            .ok_or(CvmfsError::FileNotFound)?
+            .into())
     }
 
     pub fn retrieve_file(&self, file_name: &str) -> CvmfsResult<String> {

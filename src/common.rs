@@ -1,9 +1,8 @@
 use std::fmt::Debug;
 use std::path::PathBuf;
 
+use crate::directory_entry::PathHash;
 use reqwest::Error;
-
-use crate::directoryentry::PathHash;
 
 pub const REPO_CONFIG_PATH: &str = "/etc/cvmfs/repositories.d";
 pub const SERVER_CONFIG_NAME: &str = "server.conf";

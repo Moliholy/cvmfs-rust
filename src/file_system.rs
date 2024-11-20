@@ -17,7 +17,7 @@ use fuse_mt::{
 use rand::Rng;
 
 use crate::common::{CvmfsError, CvmfsResult};
-use crate::directoryentry::DirectoryEntry;
+use crate::directory_entry::DirectoryEntry;
 use crate::repository::Repository;
 
 const TTL: Duration = Duration::from_secs(1);

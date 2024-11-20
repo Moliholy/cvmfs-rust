@@ -5,7 +5,7 @@ use rusqlite::Row;
 
 use crate::common::{canonicalize_path, split_md5, CvmfsError, CvmfsResult};
 use crate::database_object::DatabaseObject;
-use crate::directoryentry::{DirectoryEntry, PathHash};
+use crate::directory_entry::{DirectoryEntry, PathHash};
 
 pub const CATALOG_ROOT_PREFIX: &str = "C";
 const LISTING_QUERY: &str = "\

@@ -9,7 +9,7 @@ use crate::catalog::{Catalog, CATALOG_ROOT_PREFIX};
 use crate::common::{
     CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME,
 };
-use crate::directoryentry::DirectoryEntry;
+use crate::directory_entry::DirectoryEntry;
 use crate::fetcher::Fetcher;
 use crate::history::History;
 use crate::manifest::Manifest;

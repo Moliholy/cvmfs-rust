@@ -23,6 +23,7 @@ const FIND_MD5_PATH: &str = "SELECT md5path_1, md5path_2, parent_1, parent_2, ha
 FROM catalog \
 WHERE md5path_1 = ? AND md5path_2 = ? \
 LIMIT 1;";
+const READ_STATISTICS: &str = "SELECT * FROM statistics ORDER BY counter;";
 
 #[derive(Debug)]
 pub struct CatalogReference {
@@ -42,6 +43,23 @@ pub struct Catalog {
     pub hash: String,
     pub last_modified: DateTime<Utc>,
     pub root_prefix: String,
+}
+
+/// Statistics for the catalog and the whole file system.
+#[derive(Debug, Default)]
+pub struct Statistics {
+    pub chunked: u64,
+    pub chunked_size: u64,
+    pub chunks: u64,
+    pub dir: u64,
+    pub external: u64,
+    pub external_file_size: u64,
+    pub file_size: u64,
+    pub nested: u64,
+    pub regular: u64,
+    pub special: u64,
+    pub symlink: u64,
+    pub xattr: u64,
 }
 
 unsafe impl Sync for Catalog {}
@@ -158,8 +176,8 @@ impl Catalog {
     /// Create a directory listing of DirectoryEntry items based on MD5 path
     pub fn list_directory_split_md5(
         &self,
-        parent_1: u64,
-        parent_2: u64,
+        parent_1: i64,
+        parent_2: i64,
     ) -> CvmfsResult<Vec<DirectoryEntry>> {
         let mut statement = self.database.create_prepared_statement(LISTING_QUERY)?;
         let mut result = Vec::new();
@@ -192,7 +210,31 @@ impl Catalog {
                 .collect::<Vec<u8>>(),
         );
         let parent_hash = split_md5(&md5_hash.0);
-        Ok(self.list_directory_split_md5(parent_hash.hash1, parent_hash.hash2)?)
+        self.list_directory_split_md5(parent_hash.hash1, parent_hash.hash2)
+    }
+
+    pub fn get_statistics(&self) -> CvmfsResult<Statistics> {
+        let mut statement = self.database.create_prepared_statement(READ_STATISTICS)?;
+        let mut rows = statement.query([])?;
+        let mut statistics = Statistics::default();
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(0)?;
+            match name.as_str() {
+                "subtree_chunked" => statistics.chunked = row.get(1)?,
+                "subtree_chunked_size" => statistics.chunked_size = row.get(1)?,
+                "subtree_chunks" => statistics.chunks = row.get(1)?,
+                "subtree_dir" => statistics.dir = row.get(1)?,
+                "subtree_external" => statistics.external = row.get(1)?,
+                "subtree_external_file_size" => statistics.external_file_size = row.get(1)?,
+                "subtree_nested" => statistics.nested = row.get(1)?,
+                "subtree_regular" => statistics.regular = row.get(1)?,
+                "subtree_special" => statistics.special = row.get(1)?,
+                "subtree_symlink" => statistics.symlink = row.get(1)?,
+                "subtree_xattr" => statistics.xattr = row.get(1)?,
+                _ => {}
+            }
+        }
+        Ok(statistics)
     }
 
     fn make_directory_entry(&self, row: &Row) -> CvmfsResult<DirectoryEntry> {
@@ -222,7 +264,7 @@ impl Catalog {
                 .collect::<Vec<u8>>(),
         )
         .0;
-        Ok(self.find_directory_entry_md5(&md5_path)?)
+        self.find_directory_entry_md5(&md5_path)
     }
 
     pub fn find_directory_entry_md5(
@@ -230,7 +272,7 @@ impl Catalog {
         md5_path: &[u8; 16],
     ) -> CvmfsResult<Option<DirectoryEntry>> {
         let path_hash = split_md5(md5_path);
-        Ok(self.find_directory_entry_split_md5(path_hash)?)
+        self.find_directory_entry_split_md5(path_hash)
     }
 
     fn find_directory_entry_split_md5(

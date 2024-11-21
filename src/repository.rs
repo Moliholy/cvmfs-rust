@@ -5,7 +5,7 @@ use std::path::Path;
 
 use chrono::{DateTime, Utc};
 
-use crate::catalog::{Catalog, CATALOG_ROOT_PREFIX};
+use crate::catalog::{Catalog, Statistics, CATALOG_ROOT_PREFIX};
 use crate::common::{
     CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME,
 };
@@ -223,5 +223,9 @@ impl Repository {
             }
         }
         Err(CvmfsError::FileNotFound)
+    }
+
+    pub fn get_statistics(&mut self) -> CvmfsResult<Statistics> {
+        self.retrieve_current_root_catalog()?.get_statistics()
     }
 }

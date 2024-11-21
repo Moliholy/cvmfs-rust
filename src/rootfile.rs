@@ -10,7 +10,7 @@ use crate::common::{CvmfsError, CvmfsResult};
 /// Base class for CernVM-FS repository's signed 'root files'.
 /// A CernVM-FS repository has essential 'root files' that have a defined name and
 /// serve as entry points into the repository.
-/// Namely the manifest (.cvmfspublished) and the whitelist (.cvmfswhitelist) that
+/// Namely, the manifest (.cvmfspublished) and the whitelist (.cvmfswhitelist) that
 /// both have class representations inheriting from RootFile and implementing the
 /// abstract methods defined here.
 /// Any 'root file' in CernVM-FS is a signed list of line-by-line key-value pairs
@@ -42,15 +42,15 @@ impl RootFile {
         let mut checksum: Option<String> = None;
         loop {
             buffer.clear();
-            let mut bytes_read = reader.read_line(&mut buffer).or(Err(CvmfsError::IO))?;
+            let mut bytes_read = reader.read_line(&mut buffer)?;
             if bytes_read == 0 {
                 break;
             }
             if buffer[..2].eq("--") {
                 buffer.clear();
-                bytes_read = reader.read_line(&mut buffer).or(Err(CvmfsError::IO))?;
+                bytes_read = reader.read_line(&mut buffer)?;
                 if bytes_read != 41 {
-                    return Err(CvmfsError::IO);
+                    return Err(CvmfsError::IO("Input does not have 41 bytes".to_string()));
                 }
                 checksum = Some(buffer[..40].into());
                 break;

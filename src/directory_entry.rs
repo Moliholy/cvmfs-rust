@@ -16,7 +16,7 @@ pub enum ContentHashTypes {
 
 impl ContentHashTypes {
     /// Figures out the hash suffix in CVMFS's CAS
-    pub fn to_suffix(obj: &Self) -> String {
+    pub fn hash_suffix(obj: &Self) -> String {
         match obj {
             ContentHashTypes::Ripemd160 => "-rmd160".into(),
             _ => "".into(),
@@ -82,8 +82,8 @@ pub struct Chunk {
 
 #[derive(Debug)]
 pub struct PathHash {
-    pub hash1: u64,
-    pub hash2: u64,
+    pub hash1: i64,
+    pub hash2: i64,
 }
 
 #[derive(Debug)]
@@ -94,10 +94,10 @@ pub struct DirectoryEntryWrapper {
 
 #[derive(Debug)]
 pub struct DirectoryEntry {
-    pub md5_path_1: u64,
-    pub md5_path_2: u64,
-    pub parent_1: u64,
-    pub parent_2: u64,
+    pub md5_path_1: i64,
+    pub md5_path_2: i64,
+    pub parent_1: i64,
+    pub parent_2: i64,
     pub content_hash: Option<String>,
     pub flags: u32,
     pub size: u64,
@@ -196,7 +196,7 @@ impl DirectoryEntry {
             Some(value) => format!(
                 "{}{}",
                 &value,
-                ContentHashTypes::to_suffix(&self.content_hash_type)
+                ContentHashTypes::hash_suffix(&self.content_hash_type)
             ),
         }
     }

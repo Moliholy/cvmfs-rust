@@ -2,7 +2,6 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 
 use crate::directory_entry::PathHash;
-use reqwest::Error;
 
 pub const REPO_CONFIG_PATH: &str = "/etc/cvmfs/repositories.d";
 pub const SERVER_CONFIG_NAME: &str = "server.conf";
@@ -19,7 +18,7 @@ pub enum CvmfsError {
     #[error("Invalid Certificate")]
     Certificate,
     #[error("IO error")]
-    IO,
+    IO(String),
     #[error("Incomplete root file signature")]
     IncompleteRootFileSignature,
     #[error("Invalid root file signature")]
@@ -68,15 +67,15 @@ impl From<CvmfsError> for i32 {
     }
 }
 
-impl From<Error> for CvmfsError {
-    fn from(_: Error) -> Self {
-        CvmfsError::IO
+impl From<reqwest::Error> for CvmfsError {
+    fn from(e: reqwest::Error) -> Self {
+        CvmfsError::IO(format!("{:?}", e))
     }
 }
 
 impl From<std::io::Error> for CvmfsError {
-    fn from(_: std::io::Error) -> Self {
-        CvmfsError::IO
+    fn from(e: std::io::Error) -> Self {
+        CvmfsError::IO(format!("{:?}", e))
     }
 }
 
@@ -96,10 +95,10 @@ pub fn split_md5(md5_digest: &[u8; 16]) -> PathHash {
     let mut hi = 0;
     let mut lo = 0;
     for i in 0..8 {
-        lo |= (md5_digest[i] as u64) << (i * 8);
+        lo |= (md5_digest[i] as i64) << (i * 8);
     }
     for i in 8..16 {
-        hi |= (md5_digest[i] as u64) << ((i - 8) * 8)
+        hi |= (md5_digest[i] as i64) << ((i - 8) * 8)
     }
     PathHash {
         hash1: lo,

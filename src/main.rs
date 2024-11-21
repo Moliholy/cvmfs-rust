@@ -7,6 +7,7 @@ use cvmfs::file_system::CernvmFileSystem;
 use cvmfs::repository::Repository;
 
 fn main() {
+    env_logger::init();
     let args: Vec<String> = env::args().collect();
     if args.len() < 3 {
         panic!("Please specify url of the repository and the mount point");

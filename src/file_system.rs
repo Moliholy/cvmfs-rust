@@ -210,7 +210,10 @@ impl FilesystemMT for CernvmFileSystem {
             }
         };
         match repo.lookup(path)? {
-            None => Err(libc::ENOENT),
+            None => {
+                log::error!("Path not found: {path}");
+                Err(libc::ENOENT)
+            },
             Some(result) => {
                 if !result.is_directory() {
                     return Err(libc::ENOENT);
@@ -228,20 +231,27 @@ impl FilesystemMT for CernvmFileSystem {
         log::info!("Reading directory: {path}");
         let mut repo = self.repository.write().map_err(|_| libc::EIO)?;
         match repo.lookup(path)? {
-            None => Err(libc::ENOENT),
+            None => {
+                log::error!("File not found: {path}");
+                Err(libc::ENOENT)
+            },
             Some(result) => {
                 if !result.is_directory() {
+                    log::error!("Path '{path}' is not a directory");
                     return Err(libc::ENOENT);
                 }
-                let entries = repo
-                    .list_directory(path)?
-                    .into_iter()
-                    .map(|dirent| FuseDirectoryEntry {
-                        kind: map_dirent_type_to_fs_kind(&dirent),
-                        name: OsString::from(dirent.name),
-                    })
-                    .collect();
-                Ok(entries)
+                match repo.list_directory(path) {
+                    Ok(entries) => Ok(entries.into_iter()
+                        .map(|dirent| FuseDirectoryEntry {
+                            kind: map_dirent_type_to_fs_kind(&dirent),
+                            name: OsString::from(dirent.name),
+                        })
+                        .collect()),
+                    Err(e) => {
+                        log::error!("Could not list directory {path}: {:?}", e);
+                        Err(e.into())
+                    },
+                }
             }
         }
     }

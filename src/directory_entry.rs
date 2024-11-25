@@ -76,7 +76,7 @@ impl BitAnd<Flags> for u32 {
 pub struct Chunk {
     pub offset: u32,
     pub size: u32,
-    pub content_hash: String,
+    pub content_hash: Vec<u8>,
     pub content_hash_type: ContentHashTypes,
 }
 
@@ -137,9 +137,9 @@ impl DirectoryEntry {
                 Ok(row) => {
                     if let Some(row) = row {
                         self.chunks.push(Chunk {
-                            offset: row.get(0)?,
-                            size: row.get(1)?,
-                            content_hash: row.get(2)?,
+                            offset: row.get(2)?,
+                            size: row.get(3)?,
+                            content_hash: row.get(4)?,
                             content_hash_type: self.content_hash_type,
                         })
                     } else {

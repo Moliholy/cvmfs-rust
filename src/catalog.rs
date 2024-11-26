@@ -254,7 +254,7 @@ impl Catalog {
         Ok(())
     }
 
-    pub fn find_directory_entry(&self, root_path: &str) -> CvmfsResult<Option<DirectoryEntry>> {
+    pub fn find_directory_entry(&self, root_path: &str) -> CvmfsResult<DirectoryEntry> {
         let real_path = canonicalize_path(root_path);
         let md5_path = md5::compute(
             real_path
@@ -270,7 +270,7 @@ impl Catalog {
     pub fn find_directory_entry_md5(
         &self,
         md5_path: &[u8; 16],
-    ) -> CvmfsResult<Option<DirectoryEntry>> {
+    ) -> CvmfsResult<DirectoryEntry> {
         let path_hash = split_md5(md5_path);
         self.find_directory_entry_split_md5(path_hash)
     }
@@ -278,12 +278,10 @@ impl Catalog {
     fn find_directory_entry_split_md5(
         &self,
         path_hash: PathHash,
-    ) -> CvmfsResult<Option<DirectoryEntry>> {
+    ) -> CvmfsResult<DirectoryEntry> {
         let mut statement = self.database.create_prepared_statement(FIND_MD5_PATH)?;
         let mut rows = statement.query([path_hash.hash1, path_hash.hash2])?;
-        if let Some(row) = rows.next()? {
-            return Ok(Some(self.make_directory_entry(row)?));
-        }
-        Ok(None)
+        let row = rows.next()?.ok_or(CvmfsError::FileNotFound)?;
+        self.make_directory_entry(row)
     }
 }

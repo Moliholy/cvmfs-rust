@@ -192,7 +192,7 @@ impl Repository {
         }
     }
 
-    pub fn lookup(&mut self, path: &str) -> CvmfsResult<Option<DirectoryEntry>> {
+    pub fn lookup(&mut self, path: &str) -> CvmfsResult<DirectoryEntry> {
         let mut path = String::from(path);
         if path.eq("/") {
             path = String::new();
@@ -201,28 +201,23 @@ impl Repository {
         best_fit.find_directory_entry(&path)
     }
 
-    pub fn get_file(&mut self, path: &str) -> CvmfsResult<Option<File>> {
-        let result = self.lookup(path)?;
-        if let Some(directory_entry) = result {
-            if directory_entry.is_file() {
-                return Ok(Some(File::open(
-                    self.retrieve_object(&directory_entry.content_hash_string())?,
-                )?));
-            }
+    pub fn get_file(&mut self, path: &str) -> CvmfsResult<File> {
+        let directory_entry = self.lookup(path)?;
+        if !directory_entry.is_file() {
+            return Err(CvmfsError::NotAFile);
         }
-        Err(CvmfsError::FileNotFound)
+        let path = self.retrieve_object(&directory_entry.content_hash_string())?;
+        Ok(File::open(path)?)
     }
 
     /// List all the entries in a directory
     pub fn list_directory(&mut self, path: &str) -> CvmfsResult<Vec<DirectoryEntry>> {
-        let directory_entry = self.lookup(path)?;
-        if let Some(dirent) = directory_entry {
-            if dirent.is_directory() {
-                let best_fit = self.retrieve_catalog_for_path(path)?;
-                return best_fit.list_directory(path);
-            }
+        let dirent = self.lookup(path)?;
+        if !dirent.is_directory() {
+            return Err(CvmfsError::FileNotFound);
         }
-        Err(CvmfsError::FileNotFound)
+        let best_fit = self.retrieve_catalog_for_path(path)?;
+        best_fit.list_directory(path)
     }
 
     pub fn get_statistics(&mut self) -> CvmfsResult<Statistics> {

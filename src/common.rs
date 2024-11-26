@@ -47,6 +47,8 @@ pub enum CvmfsError {
     TagNotFound,
     #[error("Generic error")]
     Generic(String),
+    #[error("The path is not a file")]
+    NotAFile,
 }
 
 impl From<String> for CvmfsError {

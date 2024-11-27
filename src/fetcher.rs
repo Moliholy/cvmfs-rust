@@ -8,8 +8,8 @@ use compress::zlib;
 
 #[derive(Debug)]
 pub struct Fetcher {
-    cache: Cache,
-    source: String,
+    pub cache: Cache,
+    pub source: String,
 }
 
 impl Fetcher {

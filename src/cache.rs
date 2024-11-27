@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 
 use crate::common::{CvmfsError, CvmfsResult};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cache {
     pub cache_directory: String,
 }

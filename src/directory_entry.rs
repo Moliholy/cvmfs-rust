@@ -72,12 +72,22 @@ impl BitAnd<Flags> for u32 {
 }
 
 /// Wrapper around file chunks in the CVMFS catalogs
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chunk {
-    pub offset: u32,
-    pub size: u32,
-    pub content_hash: Vec<u8>,
+    pub offset: u64,
+    pub size: u64,
+    pub content_hash: String,
     pub content_hash_type: ContentHashTypes,
+}
+
+impl Chunk {
+    pub fn content_hash_string(&self) -> String {
+        format!(
+            "{}{}",
+            &self.content_hash,
+            ContentHashTypes::hash_suffix(&self.content_hash_type)
+        )
+    }
 }
 
 #[derive(Debug)]
@@ -92,7 +102,7 @@ pub struct DirectoryEntryWrapper {
     pub path: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DirectoryEntry {
     pub md5_path_1: i64,
     pub md5_path_2: i64,
@@ -187,18 +197,17 @@ impl DirectoryEntry {
     }
 
     pub fn has_chunks(&self) -> bool {
-        !self.chunks.is_empty()
+        self.content_hash.is_none()
     }
 
-    pub fn content_hash_string(&self) -> String {
-        match &self.content_hash {
-            None => String::new(),
-            Some(value) => format!(
+    pub fn content_hash_string(&self) -> Option<String> {
+        self.content_hash.clone().map(|value| {
+            format!(
                 "{}{}",
                 &value,
                 ContentHashTypes::hash_suffix(&self.content_hash_type)
-            ),
-        }
+            )
+        })
     }
 
     fn read_content_hash_type(flags: u32) -> ContentHashTypes {

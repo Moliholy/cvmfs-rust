@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::path::Path;
 
 use chrono::{DateTime, Utc};
 
 use crate::catalog::{Catalog, Statistics, CATALOG_ROOT_PREFIX};
 use crate::common::{
-    CvmfsError, CvmfsResult, LAST_REPLICATION_NAME, MANIFEST_NAME, REPLICATING_NAME,
+    compose_object_path, ChunkedFile, CvmfsError, CvmfsResult, FileLike, LAST_REPLICATION_NAME,
+    MANIFEST_NAME, REPLICATING_NAME,
 };
-use crate::directory_entry::DirectoryEntry;
+use crate::directory_entry::{Chunk, DirectoryEntry};
 use crate::fetcher::Fetcher;
 use crate::history::History;
 use crate::manifest::Manifest;
@@ -52,8 +52,35 @@ impl Repository {
     }
 
     /// Retrieves an object from the content addressable storage
-    pub fn retrieve_object(&self, object_hash: &str) -> CvmfsResult<String> {
-        self.retrieve_object_with_suffix(object_hash, "")
+    pub fn retrieve_object(&self, dirent: &DirectoryEntry) -> CvmfsResult<Box<dyn FileLike>> {
+        if dirent.has_chunks() {
+            let chunks: CvmfsResult<Vec<(String, Chunk)>> = dirent
+                .clone()
+                .chunks
+                .into_iter()
+                .map(|chunk| -> CvmfsResult<(String, Chunk)> {
+                    let path = compose_object_path(chunk.content_hash_string().as_str(), "")
+                        .to_str()
+                        .ok_or(CvmfsError::FileNotFound)?
+                        .to_string();
+                    Ok((path, chunk))
+                })
+                .collect();
+            Ok(Box::new(ChunkedFile::new(
+                chunks?,
+                dirent.size,
+                Fetcher::new(self.fetcher.source.as_str(), self.fetcher.cache.cache_directory.as_str())?,
+            )))
+        } else {
+            let path = self.retrieve_object_with_suffix(
+                dirent
+                    .content_hash_string()
+                    .expect("Content hash must be present if no chunks")
+                    .as_str(),
+                "",
+            )?;
+            Ok(Box::new(File::open(path)?))
+        }
     }
 
     pub fn retrieve_object_with_suffix(
@@ -61,10 +88,7 @@ impl Repository {
         object_hash: &str,
         hash_suffix: &str,
     ) -> CvmfsResult<String> {
-        let (first, second) = object_hash.split_at(2);
-        let path = Path::new("data")
-            .join(first)
-            .join(second.to_owned() + hash_suffix);
+        let path = compose_object_path(object_hash, hash_suffix);
         self.fetcher
             .retrieve_file(path.to_str().ok_or(CvmfsError::FileNotFound)?)
     }
@@ -201,13 +225,12 @@ impl Repository {
         best_fit.find_directory_entry(&path)
     }
 
-    pub fn get_file(&mut self, path: &str) -> CvmfsResult<File> {
+    pub fn get_file(&mut self, path: &str) -> CvmfsResult<Box<dyn FileLike>> {
         let directory_entry = self.lookup(path)?;
         if !directory_entry.is_file() {
             return Err(CvmfsError::NotAFile);
         }
-        let path = self.retrieve_object(&directory_entry.content_hash_string())?;
-        Ok(File::open(path)?)
+        self.retrieve_object(&directory_entry)
     }
 
     /// List all the entries in a directory

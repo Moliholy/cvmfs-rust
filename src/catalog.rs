@@ -267,18 +267,12 @@ impl Catalog {
         self.find_directory_entry_md5(&md5_path)
     }
 
-    pub fn find_directory_entry_md5(
-        &self,
-        md5_path: &[u8; 16],
-    ) -> CvmfsResult<DirectoryEntry> {
+    pub fn find_directory_entry_md5(&self, md5_path: &[u8; 16]) -> CvmfsResult<DirectoryEntry> {
         let path_hash = split_md5(md5_path);
         self.find_directory_entry_split_md5(path_hash)
     }
 
-    fn find_directory_entry_split_md5(
-        &self,
-        path_hash: PathHash,
-    ) -> CvmfsResult<DirectoryEntry> {
+    fn find_directory_entry_split_md5(&self, path_hash: PathHash) -> CvmfsResult<DirectoryEntry> {
         let mut statement = self.database.create_prepared_statement(FIND_MD5_PATH)?;
         let mut rows = statement.query([path_hash.hash1, path_hash.hash2])?;
         let row = rows.next()?.ok_or(CvmfsError::FileNotFound)?;

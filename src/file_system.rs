@@ -1,9 +1,7 @@
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
-use std::fs::File;
 use std::io::{Read, Seek, SeekFrom};
 use std::mem;
-use std::os::fd::AsRawFd;
 use std::path::Path;
 use std::sync::RwLock;
 use std::time::{Duration, SystemTime};
@@ -16,7 +14,7 @@ use fuse_mt::{
 use fuse_mt::{DirectoryEntry as FuseDirectoryEntry, ResultStatfs, Statfs};
 use rand::Rng;
 
-use crate::common::{CvmfsError, CvmfsResult};
+use crate::common::{CvmfsError, CvmfsResult, FileLike};
 use crate::directory_entry::DirectoryEntry;
 use crate::repository::Repository;
 
@@ -37,7 +35,7 @@ fn map_dirent_type_to_fs_kind(dirent: &DirectoryEntry) -> FileType {
 #[derive(Debug)]
 pub struct CernvmFileSystem {
     repository: RwLock<Repository>,
-    opened_files: RwLock<HashMap<String, File>>,
+    opened_files: RwLock<HashMap<String, Box<dyn FileLike>>>,
 }
 
 impl FilesystemMT for CernvmFileSystem {

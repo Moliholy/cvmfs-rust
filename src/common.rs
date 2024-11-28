@@ -42,12 +42,9 @@ impl ChunkedFile {
 impl Read for ChunkedFile {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
         let mut currently_read = 0;
-        let mut index = match self.chunks.iter().position(|(_, chunk)| {
+        let mut index = self.chunks.iter().position(|(_, chunk)| {
             chunk.offset >= self.position && chunk.offset + chunk.size < self.position
-        }) {
-            None => return Err(ErrorKind::UnexpectedEof.into()),
-            Some(i) => i,
-        };
+        }).unwrap_or_else(|| usize::MAX);
         while currently_read < buf.len() && index < self.chunks.len() {
             let (path, chunk) = &self.chunks[index];
             let chunk_position = self.position - chunk.offset;

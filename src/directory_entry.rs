@@ -146,10 +146,11 @@ impl DirectoryEntry {
             match rows.next() {
                 Ok(row) => {
                     if let Some(row) = row {
+                        let content_hash: Vec<u8> = row.get(4)?;
                         self.chunks.push(Chunk {
                             offset: row.get(2)?,
                             size: row.get(3)?,
-                            content_hash: row.get(4)?,
+                            content_hash: content_hash.encode_hex(),
                             content_hash_type: self.content_hash_type,
                         })
                     } else {

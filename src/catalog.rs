@@ -246,10 +246,8 @@ impl Catalog {
     /// Finds and adds the file chunk of a DirectoryEntry
     fn read_chunks(&self, directory_entry: &mut DirectoryEntry) -> CvmfsResult<()> {
         let mut statement = self.database.create_prepared_statement(READ_CHUNK)?;
-        let iterator = statement.query([
-            directory_entry.path_hash().hash1,
-            directory_entry.path_hash().hash2,
-        ])?;
+        let path_hash = directory_entry.path_hash();
+        let iterator = statement.query([path_hash.hash1, path_hash.hash2])?;
         directory_entry.add_chunks(iterator)?;
         Ok(())
     }

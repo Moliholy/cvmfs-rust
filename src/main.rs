@@ -31,7 +31,7 @@ fn main() {
 
     let fuse_args = [OsStr::new("-o"), OsStr::new("fsname=cernvmfs")];
     fuse_mt::mount(
-        fuse_mt::FuseMT::new(file_system, 1),
+        fuse_mt::FuseMT::new(file_system, 5),
         mountpoint.to_str().expect("Invalid mount point string"),
         &fuse_args[..],
     )

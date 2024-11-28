@@ -99,11 +99,8 @@ impl AsRawFd for ChunkedFile {
                 acc
             });
         let hash = md5::compute(hash_concat.as_bytes()).0;
-        u64::from_le_bytes(
-            hash.as_slice()
-                .try_into()
-                .expect("Casting to u64 should work"),
-        ) as RawFd
+        let (int_bytes, _) = hash.as_slice().split_at(size_of::<u64>());
+        u64::from_le_bytes(int_bytes.try_into().expect("Casting to u64 should work")) as RawFd
     }
 }
 

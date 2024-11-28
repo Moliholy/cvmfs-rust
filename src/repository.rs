@@ -69,7 +69,10 @@ impl Repository {
             Ok(Box::new(ChunkedFile::new(
                 chunks?,
                 dirent.size,
-                Fetcher::new(self.fetcher.source.as_str(), self.fetcher.cache.cache_directory.as_str())?,
+                Fetcher::new(
+                    self.fetcher.source.as_str(),
+                    self.fetcher.cache.cache_directory.as_str(),
+                )?,
             )))
         } else {
             let path = self.retrieve_object_with_suffix(

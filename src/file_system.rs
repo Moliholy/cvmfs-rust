@@ -21,12 +21,12 @@ use crate::repository::Repository;
 const TTL: Duration = Duration::from_secs(1);
 
 fn map_dirent_type_to_fs_kind(dirent: &DirectoryEntry) -> FileType {
-    if dirent.is_file() {
-        FileType::RegularFile
-    } else if dirent.is_directory() {
+    if dirent.is_directory() {
         FileType::Directory
     } else if dirent.is_symlink() {
         FileType::Symlink
+    } else if dirent.is_file() {
+        FileType::RegularFile
     } else {
         FileType::RegularFile
     }
@@ -128,7 +128,7 @@ impl FilesystemMT for CernvmFileSystem {
             None => return callback(Err(libc::ENOENT)),
         };
 
-        let mut data = Vec::<u8>::with_capacity(size as usize);
+        let mut data = vec![0u8; size as usize];
         if let Err(e) = file.seek(SeekFrom::Start(offset)) {
             log::error!("{:?}", e);
             return callback(Err(match e.raw_os_error() {
@@ -136,10 +136,8 @@ impl FilesystemMT for CernvmFileSystem {
                 None => libc::EIO,
             }));
         }
-        match file.read(unsafe {
-            mem::transmute::<&mut [std::mem::MaybeUninit<u8>], &mut [u8]>(data.spare_capacity_mut())
-        }) {
-            Ok(n) => unsafe { data.set_len(n) },
+        let bytes_read = match file.read(&mut data) {
+            Ok(n) => n,
             Err(e) => {
                 log::error!("{:?}", e);
                 return callback(Err(match e.raw_os_error() {
@@ -147,9 +145,9 @@ impl FilesystemMT for CernvmFileSystem {
                     None => libc::EIO,
                 }));
             }
-        }
+        };
 
-        callback(Ok(&data))
+        callback(Ok(&data[0..bytes_read]))
     }
 
     fn flush(&self, _req: RequestInfo, path: &Path, _fh: u64, _lock_owner: u64) -> ResultEmpty {

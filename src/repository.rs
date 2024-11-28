@@ -72,6 +72,7 @@ impl Repository {
                 Fetcher::new(
                     self.fetcher.source.as_str(),
                     self.fetcher.cache.cache_directory.as_str(),
+                    false,
                 )?,
             )))
         } else {

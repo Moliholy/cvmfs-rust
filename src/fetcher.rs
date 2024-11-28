@@ -13,7 +13,7 @@ pub struct Fetcher {
 }
 
 impl Fetcher {
-    pub fn new(source: &str, cache_directory: &str) -> CvmfsResult<Self> {
+    pub fn new(source: &str, cache_directory: &str, initialize: bool) -> CvmfsResult<Self> {
         let path = Path::new(source);
         let source = if path.exists() && path.is_dir() {
             format!("{}{}", "file://", source)
@@ -21,7 +21,9 @@ impl Fetcher {
             source.into()
         };
         let cache = Cache::new(cache_directory.into())?;
-        cache.initialize()?;
+        if initialize {
+            cache.initialize()?;
+        }
         Ok(Self { cache, source })
     }
 

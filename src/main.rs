@@ -25,7 +25,7 @@ fn main() {
     } else {
         "/tmp/cvmfs".into()
     };
-    let fetcher = Fetcher::new(repo_url, &repo_cache).expect("Failure creating the fetcher");
+    let fetcher = Fetcher::new(repo_url, &repo_cache, true).expect("Failure creating the fetcher");
     let repository = Repository::new(fetcher).expect("Failure creating the repository");
     let file_system = CernvmFileSystem::new(repository).expect("Failure creating the file system");
 

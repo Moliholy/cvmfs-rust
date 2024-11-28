@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::io::{Read, Seek, SeekFrom};
-use std::mem;
 use std::path::Path;
 use std::sync::RwLock;
 use std::time::{Duration, SystemTime};

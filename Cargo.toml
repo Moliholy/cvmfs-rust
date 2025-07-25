@@ -6,19 +6,51 @@ authors = ["José Molina <jmolinacolmenero@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
 publish = false
+repository = "https://github.com/Moliholy/cvmfs-rust"
+keywords = ["cvmfs", "filesystem", "fuse", "cernvm"]
+categories = ["filesystem", "science"]
+
+[lib]
+name = "cvmfs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "cvmfs-cli"
+path = "src/main.rs"
 
 [dependencies]
-x509-certificate = "0.24.0"
-thiserror = "2.0.3"
+# Cryptography and hashing
 sha1 = "0.10"
-md5 = "0.7.0"
-chrono = "0.4"
-reqwest = { version = "0.12.9", features = ["blocking"] }
-compress = "0.2"
-rusqlite = { version = "0.32.1", features = ["blob"] }
+md5 = "0.8.0"
 hex = "0.4"
+x509-certificate = "0.24.0" # X.509 certificate handling
+
+# Database and storage
+rusqlite = { version = "0.37.0", features = ["blob"] }
+
+# Filesystem integration
 fuse_mt = "0.6"
 libc = "0.2"
-rand = "0.8"
+
+# Network and HTTP
+reqwest = { version = "0.12.22", features = ["blocking"] }
+
+# Utilities
+chrono = "0.4"
+compress = "0.2"
+thiserror = "2.0.3"
+rand = "0.9.2"
+
+# Logging
 log = "0.4.22"
 env_logger = "0.11.5"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.dev]
+debug = true

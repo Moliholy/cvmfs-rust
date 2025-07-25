@@ -1,5 +1,5 @@
 use crate::common::{CvmfsError, CvmfsResult};
-use crate::rootfile::RootFile;
+use crate::root_file::RootFile;
 use chrono::{DateTime, Utc};
 
 /// Wraps information from .cvmfspublished

@@ -10,4 +10,4 @@ pub mod history;
 pub mod manifest;
 pub mod repository;
 pub mod revision_tag;
-pub mod rootfile;
+pub mod root_file;

@@ -1,3 +1,28 @@
+//! # Repository Content Fetcher for CernVM-FS
+//!
+//! This module provides functionality to retrieve files and objects from a CernVM-FS
+//! repository. It handles both local cache operations and remote retrieval from the
+//! repository server when content isn't cached.
+//!
+//! ## Features
+//!
+//! * Local file caching to improve performance and enable offline access
+//! * Transparent decompression of repository objects
+//! * HTTP/HTTPS downloads from repository servers
+//! * Fallback strategies when primary sources are unavailable
+//!
+//! ## Cache Management
+//!
+//! The fetcher uses a local cache to store downloaded files, reducing network traffic
+//! and enabling faster access to previously retrieved content. When a file is requested,
+//! the fetcher first checks if it exists in the cache before attempting to download it.
+//!
+//! ## Repository URL Structure
+//!
+//! CernVM-FS repositories are typically accessible via HTTP(S) with a URL structure that
+//! includes the repository name and a `.cvmfs` suffix. For example:
+//! `http://cvmfs-stratum-one.cern.ch/cvmfs/atlas.cern.ch`
+
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -6,6 +31,17 @@ use crate::cache::Cache;
 use crate::common::{CvmfsError, CvmfsResult};
 use compress::zlib;
 
+/// Manages retrieval of repository content from both cache and remote sources
+///
+/// The `Fetcher` is responsible for obtaining files from a CernVM-FS repository,
+/// handling local caching, and remote downloads. It abstracts away the details of
+/// where and how repository objects are stored, providing a simple interface for
+/// retrieving content by name or path.
+///
+/// It supports:
+/// * Caching downloaded files to avoid redundant network requests
+/// * Automatic decompression of repository content
+/// * Fallback to remote sources when files aren't in the cache
 #[derive(Debug)]
 pub struct Fetcher {
     pub cache: Cache,

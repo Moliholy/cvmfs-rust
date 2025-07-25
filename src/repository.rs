@@ -14,7 +14,7 @@ use crate::fetcher::Fetcher;
 use crate::history::History;
 use crate::manifest::Manifest;
 use crate::revision_tag::RevisionTag;
-use crate::rootfile::RootFile;
+use crate::root_file::RootFile;
 
 /// Wrapper around a CVMFS repository representation
 #[derive(Debug)]
